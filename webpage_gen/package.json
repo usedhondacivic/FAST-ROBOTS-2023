@@ -1,0 +1,18 @@
+{
+  "name": "static-page-gen",
+  "version": "1.0.0",
+  "description": "Static page generator for my portfolio / blog website",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Michael Crum",
+  "license": "MIT",
+  "dependencies": {
+    "fs": "0.0.1-security",
+    "fs-extra": "^11.1.0",
+    "glob": "^8.0.3",
+    "sharp": "^0.31.3",
+    "showdown": "^2.1.0"
+  }
+}
