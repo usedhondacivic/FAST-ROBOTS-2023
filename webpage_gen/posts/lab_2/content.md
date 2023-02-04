@@ -57,44 +57,124 @@ Because I am running Linux, I also had to alter line 53 in base_ble.py, as outli
 We were provided with a demo file to test our BLE connection. After switching to Ubuntu, I was able to run the full file with little difficulty, resulting in the following output:
 
 ![The output from the Jupyter Notebook](./assets/demo_start_py.png)
+
 ![And the accompanying arduino shell output](./assets/demo_start_arduino.png)
 
 ### Sending an Echo Command
 
 An Echo command returns the message that was sent to it. In this case, I augmented the message to show that the robot was responding. This required defining a new command, which must be coordinated between the Arduino and Python code.
 
-The arduino code is as follows:
+The Arduino code is as follows:
 ``` 
 case ECHO:
 
-            char char_arr[MAX_MSG_SIZE];
+    char char_arr[MAX_MSG_SIZE];
 
-            // Extract the next value from the command string as a character array
-            success = robot_cmd.get_next_value(char_arr);
-            if (!success)
-                return;
+    // Extract the next value from the command string as a character array
+    success = robot_cmd.get_next_value(char_arr);
+    if (!success)
+        return;
 
-            /*
-             * Your code goes here.
-             */
-            tx_estring_value.clear();
-            tx_estring_value.append("Robot says -> ");
-            tx_estring_value.append(char_arr);
-            tx_estring_value.append(" :)");
-            tx_characteristic_string.writeValue(tx_estring_value.c_str());             
-            
-            break;
+    tx_estring_value.clear();
+    tx_estring_value.append("Robot says -> ");
+    tx_estring_value.append(char_arr);
+    tx_estring_value.append(" :)");
+    tx_characteristic_string.writeValue(tx_estring_value.c_str());             
+    
+    break;
 ```
 
 The final output was:
+
 ![The output from the Echo command](./assets/echo.png)
 
 ### Creating a Get Time Command
 
+The get time command was similar to the echo command, but also including a float.
+
+The Arduino code:
+```
+case GET_TIME_MILLIS:
+    tx_estring_value.clear();
+    tx_estring_value.append("T:");
+    tx_estring_value.append((float)millis());
+    tx_characteristic_string.writeValue(tx_estring_value.c_str());
+    break;
+```
+
+The Python code and output:
+
+![The python code / output for get time](./assets/get_time_millis.png)
+
 ### Making a Notification Handler
+
+We often don't know when a message will be posted, but want to be alerted when it does. Bleak call these events notifications, and provides a method to register a handler function. Below is the Python code for implementing one, which extracts the timestamp from a message.
+
+![The python notifier](./assets/handler_test.png)
 
 ### Writing the Get Temperature Command
 
+The Artemis includes a temperature sensor and methods to access its data, so getting the temperature was similar to getting the time. In order to time the successive reads I used a delay. Below is the relevant code:
+
+```
+case GET_TEMP_5S:
+    for(int i = 0; i < 5; i++){
+        unsigned long start = millis();
+        tx_estring_value.clear();
+        tx_estring_value.append("T:");
+        tx_estring_value.append((float)start);
+        tx_estring_value.append("|C:");
+        tx_estring_value.append((float)getTempDegF());
+        if(i!=4){
+            tx_estring_value.append("|");                  
+        }
+
+        tx_characteristic_string.writeValue(tx_estring_value.c_str());
+        delay(start + 1000 - millis());                
+    }
+    break;
+```
+
+And Python output
+
+![The Python output of the Get Temperature Command](./assets/temp_5s_test.png)
+
+I also wrote a command that attempts to sample and relay data at 20Hz, which is shown below:
+
+Arduino code:
+```
+case GET_TEMP_5S_RAPID:
+    for(int i = 0; i < 20*5; i++){
+        unsigned long start = millis();
+        tx_estring_value.clear();
+        tx_estring_value.append("T:");
+        tx_estring_value.append((float)start);
+        tx_estring_value.append("|C:");
+        tx_estring_value.append((float)getTempDegF());
+        if(i!=4){
+            tx_estring_value.append("|");                  
+        }
+
+        tx_characteristic_string.writeValue(tx_estring_value.c_str());
+        delay(start + 50 - millis()); // Around 20 times per sec                    
+    }
+    break;
+```
+
+Python code / output:
+
+![The python output for rapid temperature sensing](./assets/temp_rapid.png)
+
+The output is clipped, but continues for 100 readings over 5 seconds.
+
 ### Limitations
 
+Dealing with the BLE overhead as well as constructing string messages takes a huge number of processor cycles. In some high speed applications this is unacceptable, and real time data relaying is not possible. In these cases, we need to store data and relay it at some other time.
+
+With 384 kb of RAM, the Artemis can store 192,000 16 bit words. Assuming we are sampling 10 data points at 150Hz, this gives 1500 words per second. The Artemis would run out of storage in 128 seconds.
+
+Although this is inversely proportional to the amount of data points we store, this should be enough to execute tricks and relay data afterwards. 
+
 ## Conclusion
+
+Although my first attempts at using Windows 11 were rocky, the rest of the lab went smoothly in Linux. I am confident that I will be able to use Bluetooth to interface with and debug my robot over the following labs.

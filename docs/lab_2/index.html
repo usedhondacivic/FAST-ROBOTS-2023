@@ -125,38 +125,94 @@ characteristics:
 <p>Because I am running Linux, I also had to alter line 53 in base_ble.py, as outlined in the lab instructions.</p>
 <h3 id="runningdemoipynb">Running demo.ipynb</h3>
 <p>We were provided with a demo file to test our BLE connection. After switching to Ubuntu, I was able to run the full file with little difficulty, resulting in the following output:</p>
-<p><img src="./assets/demo_start_py.png" alt="The output from the Jupyter Notebook" />
-<img src="./assets/demo_start_arduino.png" alt="And the accompanying arduino shell output" /></p>
+<p><img src="./assets/demo_start_py.png" alt="The output from the Jupyter Notebook" /></p>
+<p><img src="./assets/demo_start_arduino.png" alt="And the accompanying arduino shell output" /></p>
 <h3 id="sendinganechocommand">Sending an Echo Command</h3>
 <p>An Echo command returns the message that was sent to it. In this case, I augmented the message to show that the robot was responding. This required defining a new command, which must be coordinated between the Arduino and Python code.</p>
-<p>The arduino code is as follows:</p>
+<p>The Arduino code is as follows:</p>
 <pre><code>case ECHO:
 
-            char char_arr[MAX_MSG_SIZE];
+    char char_arr[MAX_MSG_SIZE];
 
-            // Extract the next value from the command string as a character array
-            success = robot_cmd.get_next_value(char_arr);
-            if (!success)
-                return;
+    // Extract the next value from the command string as a character array
+    success = robot_cmd.get_next_value(char_arr);
+    if (!success)
+        return;
 
-            /*
-             * Your code goes here.
-             */
-            tx_estring_value.clear();
-            tx_estring_value.append("Robot says -&gt; ");
-            tx_estring_value.append(char_arr);
-            tx_estring_value.append(" :)");
-            tx_characteristic_string.writeValue(tx_estring_value.c_str());             
+    tx_estring_value.clear();
+    tx_estring_value.append("Robot says -&gt; ");
+    tx_estring_value.append(char_arr);
+    tx_estring_value.append(" :)");
+    tx_characteristic_string.writeValue(tx_estring_value.c_str());             
 
-            break;
+    break;
 </code></pre>
-<p>The final output was:
-<img src="./assets/echo.png" alt="The output from the Echo command" /></p>
+<p>The final output was:</p>
+<p><img src="./assets/echo.png" alt="The output from the Echo command" /></p>
 <h3 id="creatingagettimecommand">Creating a Get Time Command</h3>
+<p>The get time command was similar to the echo command, but also including a float.</p>
+<p>The Arduino code:</p>
+<pre><code>case GET_TIME_MILLIS:
+    tx_estring_value.clear();
+    tx_estring_value.append("T:");
+    tx_estring_value.append((float)millis());
+    tx_characteristic_string.writeValue(tx_estring_value.c_str());
+    break;
+</code></pre>
+<p>The Python code and output:</p>
+<p><img src="./assets/get_time_millis.png" alt="The python code / output for get time" /></p>
 <h3 id="makinganotificationhandler">Making a Notification Handler</h3>
+<p>We often don't know when a message will be posted, but want to be alerted when it does. Bleak call these events notifications, and provides a method to register a handler function. Below is the Python code for implementing one, which extracts the timestamp from a message.</p>
+<p><img src="./assets/handler_test.png" alt="The python notifier" /></p>
 <h3 id="writingthegettemperaturecommand">Writing the Get Temperature Command</h3>
+<p>The Artemis includes a temperature sensor and methods to access its data, so getting the temperature was similar to getting the time. In order to time the successive reads I used a delay. Below is the relevant code:</p>
+<pre><code>case GET_TEMP_5S:
+    for(int i = 0; i &lt; 5; i++){
+        unsigned long start = millis();
+        tx_estring_value.clear();
+        tx_estring_value.append("T:");
+        tx_estring_value.append((float)start);
+        tx_estring_value.append("|C:");
+        tx_estring_value.append((float)getTempDegF());
+        if(i!=4){
+            tx_estring_value.append("|");                  
+        }
+
+        tx_characteristic_string.writeValue(tx_estring_value.c_str());
+        delay(start + 1000 - millis());                
+    }
+    break;
+</code></pre>
+<p>And Python output</p>
+<p><img src="./assets/temp_5s_test.png" alt="The Python output of the Get Temperature Command" /></p>
+<p>I also wrote a command that attempts to sample and relay data at 20Hz, which is shown below:</p>
+<p>Arduino code:</p>
+<pre><code>case GET_TEMP_5S_RAPID:
+    for(int i = 0; i &lt; 20*5; i++){
+        unsigned long start = millis();
+        tx_estring_value.clear();
+        tx_estring_value.append("T:");
+        tx_estring_value.append((float)start);
+        tx_estring_value.append("|C:");
+        tx_estring_value.append((float)getTempDegF());
+        if(i!=4){
+            tx_estring_value.append("|");                  
+        }
+
+        tx_characteristic_string.writeValue(tx_estring_value.c_str());
+        delay(start + 50 - millis()); // Around 20 times per sec                    
+    }
+    break;
+</code></pre>
+<p>Python code / output:</p>
+<p><img src="./assets/temp_rapid.png" alt="The python output for rapid temperature sensing" /></p>
+<p>The output is clipped, but continues for 100 readings over 5 seconds.</p>
 <h3 id="limitations">Limitations</h3>
+<p>Dealing with the BLE overhead as well as constructing string messages takes a huge number of processor cycles. In some high speed applications this is unacceptable, and real time data relaying is not possible. In these cases, we need to store data and relay it at some other time.</p>
+<p>With 384 kb of RAM, the Artemis can store 192,000 16 bit words. Assuming we are sampling 10 data points at 150Hz, this gives 1500 words per second. The Artemis would run out of storage in 128 seconds.</p>
+<p>Although this is inversely proportional to the amount of data points we store, this should be enough to execute tricks and relay data afterwards. </p>
 <h2 id="conclusion">Conclusion</h2>
+<p>Although my first attempts at using Windows 11 were rocky, the rest of the lab went smoothly in Linux. I am confident that I will be able to use Bluetooth to interface with and debug my robot over the following labs.</p>
     </article>
     <div id="right_pad"></div>
 </body>
