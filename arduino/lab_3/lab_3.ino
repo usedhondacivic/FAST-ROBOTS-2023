@@ -217,35 +217,35 @@ setup()
 
     BLE.advertise();
 
-    distanceSensorB.sensorOff();
-    if (distanceSensorA.begin() != 0) //Begin returns 0 on a good init
-    {
-      Serial.println("Sensor A failed to begin. Please check wiring. Freezing...");
-      while (1)
-        ;
-    }
-    Serial.println("Sensor A Online! Changing I2C address.");
-    distanceSensorA.setI2CAddress(0x38);
-    Serial.println("Enabling sensor B...");
-    distanceSensorB.sensorOn(); // Enable B
-    if (distanceSensorB.begin() != 0) //Begin returns 0 on a good init
-    {
-      Serial.println("Sensor B failed to begin. Please check wiring. Freezing...");
-      while (1)
-        ;
-    }
-    if(distanceSensorA.getI2CAddress() == distanceSensorB.getI2CAddress()){
-      Serial.println("Error disambiguating distance sensor I2C addresses. Freezing...");
-      while (1)
-        ;
-    }
-    Serial.println("Sensor A and B Online!");
-    Serial.print("Sensor A I2C address = ");
-    Serial.println(distanceSensorA.getI2CAddress());
-    Serial.print("Sensor B I2C address = ");
-    Serial.println(distanceSensorB.getI2CAddress());
-    distanceSensorA.setDistanceModeLong();
-    distanceSensorB.setDistanceModeLong();
+      distanceSensorB.sensorOff();
+      if (distanceSensorA.begin() != 0) //Begin returns 0 on a good init
+      {
+        Serial.println("Sensor A failed to begin. Please check wiring. Freezing...");
+        while (1)
+          ;
+      }
+      Serial.println("Sensor A Online! Changing I2C address.");
+      distanceSensorA.setI2CAddress(0x38);
+      Serial.println("Enabling sensor B...");
+      distanceSensorB.sensorOn(); // Enable B
+      if (distanceSensorB.begin() != 0) //Begin returns 0 on a good init
+      {
+        Serial.println("Sensor B failed to begin. Please check wiring. Freezing...");
+        while (1)
+          ;
+      }
+      if(distanceSensorA.getI2CAddress() == distanceSensorB.getI2CAddress()){
+        Serial.println("Error disambiguating distance sensor I2C addresses. Freezing...");
+        while (1)
+          ;
+      }
+      Serial.println("Sensor A and B Online!");
+      Serial.print("Sensor A I2C address = ");
+      Serial.println(distanceSensorA.getI2CAddress());
+      Serial.print("Sensor B I2C address = ");
+      Serial.println(distanceSensorB.getI2CAddress());
+      distanceSensorA.setDistanceModeLong();
+      distanceSensorB.setDistanceModeLong();
 }
 
 void
