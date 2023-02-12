@@ -1,14 +1,14 @@
 ## Introduction
 
-In this lab I setup communication between the Artemis and a SparkFun time of flight sensor. I then benchmarked the sensor on effectiveness and wrote code to allow multiple sensors to be utilized.
+In this lab, I set up communication between the Artemis and a SparkFun time of flight sensor. I then benchmarked the sensor on effectiveness and wrote code to communicate with multiple sensors.
 
 ## Prelab
 
-In order to communicate with an I2C peripheral, we need to know its address. The data sheet claims that the sensors use 0x52.
+To communicate with an I2C peripheral, we need to know its address. The data sheet claims that the sensors use 0x52.
 
-Because the sensors share an I2C address, I had to be careful when interfacing with them concurrently. In order to disambiguate the sensors, I used the shutdown pin on one sensor to disable it while I programmatically changed the I2C address of the other sensor.
+Because the sensors share an I2C address, I had to be careful when interfacing with them concurrently. To disambiguate the sensors, I used the shutdown pin on one sensor to disable it while I programmatically changed the I2C address of the other sensor.
 
-I chose to use 0x38 as the other address arbitrarily, any other 8 bit address should work as well (other than 0x52 of course).
+I chose to use 0x38 as the other address arbitrarily, any other 8-bit address should work as well (other than 0x52 of course).
 
 I am planning to mount both sensors on the front of my car, at slight angles to the left and right. This will let me map the room in a way analogous to human eyes.
 
@@ -22,7 +22,7 @@ My wiring gives the IMU the shortest cable run to minimize EMI and places the se
 
 ![Single Sensor wired](./assets/single_sensor_wired.png)
 
-I cut and soldered the provided QWIIC connectors to the two TOF sensors. They pass through a 4 way QWIIC splitter and are routed back to the Artemis.
+I cut and soldered the provided QWIIC connectors to the two TOF sensors. They pass through a 4-way QWIIC splitter and are routed back to the Artemis.
 
 Below is the entire system wired.
 
@@ -38,7 +38,7 @@ I2C device found at address 0x29   !
 done
 ```
 
-I2C uses the LSB of the address for indicating read / write. In the data-sheet the device address is listed as 0x52, which is 0x29 << 1. Therefore the two addresses match.
+I2C uses the LSB of the address for indicating read/write. In the data sheet, the device address is listed as 0x52, which is 0x29 << 1. Therefore the two addresses match.
 
 ### Sensor Data
 
@@ -46,11 +46,11 @@ To measure the accuracy and precision of the sensor, I took 10 readings every 50
 
 ![Sensor data plot](./assets/error.png)
 
-I also measured an average ranging time of 97 ms regardless of the range.
+On average, the ranging time was 97 ms regardless of distance.
 
 ### 2 ToF Sensors
 
-In order to use two sensors with the same I2C address, I toggle the enable pin on one while I change the address of the other. The SparkFun library provides a method to enable/disable the sensor, so this was fairly simple. Below is the relevant Arduino code and program output.
+To use two sensors with the same I2C address, I toggle the enable pin on one while I change the address of the other. The SparkFun library provides a method to enable/disable the sensor, so this was fairly simple. Below is the relevant Arduino code and program output.
 
 Arduino code:
 
@@ -90,7 +90,7 @@ distanceSensorB.sensorOff();
 
 ### ToF Sensor Speed
 
-When readings were taken from both sensors at maximum speed, I observed delays of between 80 and 110 ms. I took these readings using the following arduino code:
+When readings were taken from both sensors at maximum speed, I observed delays of between 80 and 110 ms. I took these readings using the following Arduino code:
 
 ```
 while(1){
@@ -130,7 +130,7 @@ I previously measured a ranging delay of around 97 ms from the sensor. This take
 
 ### Relaying Data Over Bluetooth
 
-Due to other overhead caused by Bluetooth communication, realtime data relaying is not practical. Instead, I store data onboard the Artemis and relay it at a later time. Bellow is the code to achieve this effect:
+Due to other overhead caused by Bluetooth communication, real-time data relaying is not practical. Instead, I store data onboard the Artemis and relay it at a later time. Below is the code to achieve this effect:
 
 Arduino:
 ```
