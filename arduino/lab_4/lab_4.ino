@@ -11,91 +11,210 @@
  ***************************************************************/
 #include "ICM_20948.h" // Click here to get the library: http://librarymanager/All#SparkFun_ICM_20948_IMU
 
-//#define USE_SPI       // Uncomment this to use SPI
+#include "SparkFun_VL53L1X.h" //Click here to get the library: http://librarymanager/All#SparkFun_VL53L1X
+
 
 #define SERIAL_PORT Serial
 
-#define SPI_PORT SPI // Your desired SPI port.       Used only when "USE_SPI" is defined
-#define CS_PIN 2     // Which pin you connect CS to. Used only when "USE_SPI" is defined
+typedef struct {
+  float x;
+  float y;
+  float z;
+} THREE_AXIS;
 
-#define WIRE_PORT Wire // Your desired Wire port.      Used when "USE_SPI" is not defined
-// The value of the last bit of the I2C address.
-// On the SparkFun 9DoF IMU breakout the default is 1, and when the ADR jumper is closed the value becomes 0
-#define AD0_VAL 1
+class CAR{
+  private:
+    // SENSORS
+    ICM_20948_I2C myICM;
 
-#ifdef USE_SPI
-ICM_20948_SPI myICM; // If using SPI create an ICM_20948_SPI object
-#else
-ICM_20948_I2C myICM; // Otherwise create an ICM_20948_I2C object
-#endif
+    SFEVL53L1X distanceSensorA;
+    SFEVL53L1X distanceSensorB;
+
+    // DATA STRUCTURES
+    struct {
+      THREE_AXIS accel;
+      THREE_AXIS gyro_delta;
+      THREE_AXIS gyro;
+      THREE_AXIS mag;
+      int tof_a;
+      int tof_b;
+      long int imu_stamp;
+      long int tof_a_stamp;
+      long int tof_b_stamp;
+    } sensor_readings;
+
+    struct {
+      THREE_AXIS rot;
+      THREE_AXIS pos;
+    } pose;
+
+  public:
+    void setup(){
+      Serial.begin(115200);
+      while (!SERIAL_PORT)
+      {
+      };
+      Serial.println("Robot booting...");
+
+      Wire.begin();
+      Wire.setClock(400000);
+      
+      Serial.println("Initializing IMU...");
+      bool initialized = false;
+      while (!initialized)
+      {
+        myICM.begin(Wire, 1);
+
+        Serial.print(F("Initialization of IMU returned: "));
+        Serial.println(myICM.statusString());
+        if (myICM.status != ICM_20948_Stat_Ok)
+        {
+          SERIAL_PORT.println("Trying again...");
+          delay(500);
+        }
+        else
+        {
+          initialized = true;
+        }
+      }
+
+      sensor_readings.gyro.x = 0;
+      sensor_readings.gyro.y = 0;
+      sensor_readings.gyro.z = 0;
+
+      pose.rot.x = 0;
+      pose.rot.y = 0;
+
+      Serial.println("Initallizing ToF Sensors...");
+      distanceSensorA = SFEVL53L1X(Wire, 7, -1);
+      distanceSensorB = SFEVL53L1X(Wire, 8, -1);
+      distanceSensorA.sensorOff();
+      delay(500);
+      distanceSensorA.sensorOn();
+      distanceSensorB.sensorOff();
+      initialized = false;
+      while (!initialized){
+        if(distanceSensorA.begin() != 0) //Begin returns 0 on a good init
+        {
+          Serial.println("Sensor A failed to begin. Trying again...");
+          delay(500);
+        }else{
+          initialized = true;          
+        }
+      }
+      Serial.println("Sensor A Online! Changing I2C address.");
+      distanceSensorA.setI2CAddress(0x38);
+      Serial.println("Enabling sensor B...");
+      distanceSensorB.sensorOn(); // Enable B
+      initialized = false;
+      while (!initialized){
+        if(distanceSensorA.begin() != 0) //Begin returns 0 on a good init
+        {
+          Serial.println("Sensor A failed to begin. Trying again...");
+          delay(500);
+        }else{
+          initialized = true;          
+        }
+      }
+      Serial.println("Sensor A and B Online!");
+      distanceSensorA.setDistanceModeLong();
+      distanceSensorB.setDistanceModeLong();
+
+      Serial.println("Robot successfully booted!");      
+      pinMode(LED_BUILTIN, OUTPUT);
+      digitalWrite(LED_BUILTIN, HIGH);  // turn the LED on (HIGH is the voltage level)
+      delay(100);                 
+      digitalWrite(LED_BUILTIN, LOW);   // turn the LED off by making the voltage LOW
+      delay(100);
+      digitalWrite(LED_BUILTIN, HIGH);  // turn the LED on (HIGH is the voltage level)
+      delay(100);                      
+      digitalWrite(LED_BUILTIN, LOW);   // turn the LED off by making the voltage LOW
+
+    }
+    void update(){
+      update_sensor_readings();
+      update_pose();
+      Serial.print(sensor_readings.gyro.x);
+      Serial.print(" ");
+      Serial.print(sensor_readings.gyro.y);
+      Serial.print(" ");
+      Serial.print(sensor_readings.gyro.z);
+      Serial.print(" ");
+      Serial.print(pose.rot.x);
+      Serial.print(" ");
+      Serial.print(pose.rot.y);
+      Serial.println();
+    }  
+    void update_sensor_readings(){
+      // Update IMU
+      if (myICM.dataReady())
+      {
+        myICM.getAGMT();         // The values are only updated when you call 'getAGMT'
+        sensor_readings.accel.x = myICM.accX();
+        sensor_readings.accel.y = myICM.accY();
+        sensor_readings.accel.z = myICM.accZ();
+
+        sensor_readings.mag.x = myICM.magX();
+        sensor_readings.mag.y = myICM.magY();
+        sensor_readings.mag.z = myICM.magZ();
+
+        sensor_readings.gyro_delta.x = myICM.gyrX();
+        sensor_readings.gyro_delta.y = myICM.gyrY();
+        sensor_readings.gyro_delta.z = myICM.gyrZ();
+
+        float dt = (float)(millis() - sensor_readings.imu_stamp) / 1000.0;
+        //Serial.println(dt);
+        sensor_readings.gyro.x += myICM.gyrX() * dt;
+        sensor_readings.gyro.y -= myICM.gyrY() * dt;
+        sensor_readings.gyro.z += myICM.gyrZ() * dt;
+
+        //printScaledAGMT(&myICM); // This function takes into account the scale settings from when the measurement was made to calculate the values with units
+        //plotGyro(&myICM);
+        //plotPitchRollYaw(&myICM);
+        //plotAccel(&myICM);
+
+        sensor_readings.imu_stamp = millis();
+      }
+
+      distanceSensorA.startRanging(); 
+      if(distanceSensorA.checkForDataReady()){
+        sensor_readings.tof_a = distanceSensorA.getDistance();
+        distanceSensorA.clearInterrupt();
+
+        sensor_readings.tof_a_stamp = millis();
+      }
+
+      distanceSensorB.startRanging();
+      if(distanceSensorB.checkForDataReady()){
+        sensor_readings.tof_b = distanceSensorB.getDistance();
+        distanceSensorB.clearInterrupt();
+
+        sensor_readings.tof_b_stamp = millis();
+      }      
+    }
+    void update_pose(){
+      // https://www.nxp.com/docs/en/application-note/AN3461.pdf
+      float roll= atan2(sensor_readings.accel.y, sensor_readings.accel.z) * 180 / 3.14;
+      float pitch = atan2(sensor_readings.accel.x, sensor_readings.accel.z) * 180 / 3.14;
+
+      // https://seanboe.me/blog/complementary-filters
+      float gyro_favor = 0.96;
+      float dt = millis() - sensor_readings.imu_stamp;
+      pose.rot.x = (gyro_favor) * (pose.rot.x + (sensor_readings.gyro.x * (1.00 / dt))) + (1.00 - gyro_favor) * (roll);
+      pose.rot.y = (gyro_favor) * (pose.rot.y + (sensor_readings.gyro.y * (1.00 / dt))) + (1.00 - gyro_favor) * (pitch);
+    }
+};
+
+CAR my_car;
 
 void setup()
 {
-
-  SERIAL_PORT.begin(115200);
-  while (!SERIAL_PORT)
-  {
-  };
-
-#ifdef USE_SPI
-  SPI_PORT.begin();
-#else
-  WIRE_PORT.begin();
-  WIRE_PORT.setClock(400000);
-#endif
-
-  //myICM.enableDebugging(); // Uncomment this line to enable helpful debug messages on Serial
-
-  bool initialized = false;
-  while (!initialized)
-  {
-
-#ifdef USE_SPI
-    myICM.begin(CS_PIN, SPI_PORT);
-#else
-    myICM.begin(WIRE_PORT, AD0_VAL);
-#endif
-
-    //SERIAL_PORT.print(F("Initialization of the sensor returned: "));
-    //SERIAL_PORT.println(myICM.statusString());
-    if (myICM.status != ICM_20948_Stat_Ok)
-    {
-      //SERIAL_PORT.println("Trying again...");
-      delay(500);
-    }
-    else
-    {
-      initialized = true;
-    }
-  }
-
-  pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, HIGH);  // turn the LED on (HIGH is the voltage level)
-  delay(100);                      // wait for a second
-  digitalWrite(LED_BUILTIN, LOW);   // turn the LED off by making the voltage LOW
-  delay(100);
-  digitalWrite(LED_BUILTIN, HIGH);  // turn the LED on (HIGH is the voltage level)
-  delay(100);                      // wait for a second
-  digitalWrite(LED_BUILTIN, LOW);   // turn the LED off by making the voltage LOW
+  my_car.setup();
 }
 
 void loop()
 {
-
-  if (myICM.dataReady())
-  {
-    myICM.getAGMT();         // The values are only updated when you call 'getAGMT'
-                             //    printRawAGMT( myICM.agmt );     // Uncomment this to see the raw values, taken directly from the agmt structure
-    //printScaledAGMT(&myICM); // This function takes into account the scale settings from when the measurement was made to calculate the values with units
-    //plotGyro(&myICM);
-    //plotPitchRollYaw(&myICM);
-    plotAccel(&myICM);
-  }
-  else
-  {
-    //SERIAL_PORT.println("Waiting for data");
-    delay(500);
-  }
+  my_car.update();
 }
 
 // Below here are some helper functions to print the data nicely!
@@ -271,4 +390,9 @@ void plotPitchRollYaw(ICM_20948_I2C *sensor)
   SERIAL_PORT.print(" ");
   printFormattedFloat(roll, 5, 2);
   SERIAL_PORT.println();
+}
+
+void integrate_gyro(ICM_20948_I2C *sensor)
+{
+  
 }
