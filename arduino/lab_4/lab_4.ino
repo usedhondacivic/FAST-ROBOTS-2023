@@ -1,18 +1,20 @@
-/****************************************************************
- * Example1_Basics.ino
- * ICM 20948 Arduino Library Demo
- * Use the default configuration to stream 9-axis IMU data
- * Owen Lyke @ SparkFun Electronics
- * Original Creation Date: April 17 2019
- *
- * Please see License.md for the license information.
- *
- * Distributed as-is; no warranty is given.
- ***************************************************************/
+#include "BLECStringCharacteristic.h" // BLE Headers
+#include "EString.h"
+#include "RobotCommand.h"
+#include <ArduinoBLE.h>
+
 #include "ICM_20948.h" // Click here to get the library: http://librarymanager/All#SparkFun_ICM_20948_IMU
 
-#include "SparkFun_VL53L1X.h" //Click here to get the library: http://librarymanager/All#SparkFun_VL53L1X
+#include "SparkFun_VL53L1X.h" // Click here to get the library: http://librarymanager/All#SparkFun_VL53L1X
 
+#include "LinkedList.h" // Linked List implementation: https://stackoverflow.com/questions/9986591/vectors-in-arduino
+
+
+#define BLE_UUID_TEST_SERVICE "f74736e0-f5ac-4541-959d-e6c1f1b3f55c"
+#define BLE_UUID_RX_STRING "58482b00-4146-4122-be67-2d89016731a8"
+
+#define BLE_UUID_TX_FLOAT "51eed2ce-3329-4232-b8d5-8f022aaa2d1a"
+#define BLE_UUID_TX_STRING "aa71399e-0f1d-411d-ac23-7ace2936fd5e"
 
 #define SERIAL_PORT Serial
 
@@ -20,7 +22,13 @@ typedef struct {
   float x;
   float y;
   float z;
+  long int stamp;
 } THREE_AXIS;
+
+typedef struct {
+  int dist;
+  long int stamp;  
+} TOF_DATA;
 
 class CAR{
   private:
@@ -36,11 +44,8 @@ class CAR{
       THREE_AXIS gyro_delta;
       THREE_AXIS gyro;
       THREE_AXIS mag;
-      int tof_a;
-      int tof_b;
-      long int imu_stamp;
-      long int tof_a_stamp;
-      long int tof_b_stamp;
+      TOF_DATA tof_a;
+      TOF_DATA tof_b;
     } sensor_readings;
 
     struct {
@@ -48,7 +53,23 @@ class CAR{
       THREE_AXIS pos;
     } pose;
 
+    long int start_time;
+
   public:
+    enum  BUFFER_TYPE {ACCEL, GYRO, MAG, TOF, POSE, NA};
+    struct {
+      LinkedList<THREE_AXIS> accel;
+      LinkedList<THREE_AXIS> gyro;
+      LinkedList<THREE_AXIS> mag;
+      LinkedList<TOF_DATA> tofA;
+      LinkedList<TOF_DATA> tofB;
+      LinkedList<THREE_AXIS> pose_rot;
+      LinkedList<THREE_AXIS> pose_pos;
+
+
+      bool enabled[5];
+    } data_buffers;
+
     void setup(){
       Serial.begin(115200);
       while (!SERIAL_PORT)
@@ -119,8 +140,9 @@ class CAR{
       Serial.println("Sensor A and B Online!");
       distanceSensorA.setDistanceModeLong();
       distanceSensorB.setDistanceModeLong();
-
-      Serial.println("Robot successfully booted!");      
+      distanceSensorA.startRanging(); 
+      distanceSensorB.startRanging(); 
+   
       pinMode(LED_BUILTIN, OUTPUT);
       digitalWrite(LED_BUILTIN, HIGH);  // turn the LED on (HIGH is the voltage level)
       delay(100);                 
@@ -130,22 +152,58 @@ class CAR{
       delay(100);                      
       digitalWrite(LED_BUILTIN, LOW);   // turn the LED off by making the voltage LOW
 
+      data_buffers.enabled[ACCEL] = false;
+      data_buffers.enabled[GYRO] = false;
+      data_buffers.enabled[MAG] = false;
+      data_buffers.enabled[TOF] = false;
+      data_buffers.enabled[POSE] = false;
+
+      start_time = millis();
+
+      Serial.println("Robot successfully booted!");   
     }
+
     void update(){
       update_sensor_readings();
-      update_pose();
-      Serial.print(sensor_readings.gyro.x);
-      Serial.print(" ");
-      Serial.print(sensor_readings.gyro.y);
-      Serial.print(" ");
-      Serial.print(sensor_readings.gyro.z);
-      Serial.print(" ");
-      Serial.print(pose.rot.x);
-      Serial.print(" ");
-      Serial.print(pose.rot.y);
-      Serial.println();
+      // if(millis() - start_time > 1000 && millis() - start_time < 2000){
+      //   data_buffers.enabled[data_buffers.ACCEL] = true;
+      // }else{
+      //   if(data_buffers.enabled[data_buffers.ACCEL]){
+      //     Serial.print("Data points collected in one second: ");
+      //     Serial.println(data_buffers.accel.getLength());          
+      //   }
+      //   data_buffers.enabled[data_buffers.ACCEL] = false;
+      // }
     }  
+    
     void update_sensor_readings(){
+      //Update TOF
+      if(distanceSensorA.checkForDataReady()){
+        sensor_readings.tof_a.dist = distanceSensorA.getDistance();
+        distanceSensorA.clearInterrupt();
+
+        sensor_readings.tof_a.stamp = millis();
+
+        distanceSensorA.startRanging(); 
+
+        if(data_buffers.enabled[TOF]){
+          data_buffers.tofA.Append(sensor_readings.tof_a);
+        }
+      }
+
+      if(distanceSensorB.checkForDataReady()){
+        sensor_readings.tof_b.dist = distanceSensorB.getDistance();
+        distanceSensorB.clearInterrupt();
+
+        sensor_readings.tof_b.stamp = millis();
+
+        distanceSensorB.startRanging(); 
+
+        if(data_buffers.enabled[TOF]){
+          data_buffers.tofB.Append(sensor_readings.tof_b);
+        }
+      }    
+
       // Update IMU
       if (myICM.dataReady())
       {
@@ -154,245 +212,301 @@ class CAR{
         sensor_readings.accel.y = myICM.accY();
         sensor_readings.accel.z = myICM.accZ();
 
+        sensor_readings.accel.stamp = millis();
+
+        if(data_buffers.enabled[ACCEL]){
+          data_buffers.accel.Append(sensor_readings.accel);
+        }
+
         sensor_readings.mag.x = myICM.magX();
         sensor_readings.mag.y = myICM.magY();
         sensor_readings.mag.z = myICM.magZ();
+
+        sensor_readings.mag.stamp = millis();
+
+        if(data_buffers.enabled[MAG]){
+          data_buffers.mag.Append(sensor_readings.mag);
+        }
 
         sensor_readings.gyro_delta.x = myICM.gyrX();
         sensor_readings.gyro_delta.y = myICM.gyrY();
         sensor_readings.gyro_delta.z = myICM.gyrZ();
 
-        float dt = (float)(millis() - sensor_readings.imu_stamp) / 1000.0;
+        sensor_readings.gyro_delta.stamp = millis();
+
+        float dt = (float)(millis() - sensor_readings.gyro.stamp) / 1000.0;
         //Serial.println(dt);
         sensor_readings.gyro.x += myICM.gyrX() * dt;
         sensor_readings.gyro.y -= myICM.gyrY() * dt;
         sensor_readings.gyro.z += myICM.gyrZ() * dt;
 
-        //printScaledAGMT(&myICM); // This function takes into account the scale settings from when the measurement was made to calculate the values with units
-        //plotGyro(&myICM);
-        //plotPitchRollYaw(&myICM);
-        //plotAccel(&myICM);
+        sensor_readings.gyro.stamp = millis();
 
-        sensor_readings.imu_stamp = millis();
-      }
+        if(data_buffers.enabled[GYRO]){
+          data_buffers.gyro.Append(sensor_readings.gyro);
+        }
 
-      distanceSensorA.startRanging(); 
-      if(distanceSensorA.checkForDataReady()){
-        sensor_readings.tof_a = distanceSensorA.getDistance();
-        distanceSensorA.clearInterrupt();
+        float roll= atan2(sensor_readings.accel.y, sensor_readings.accel.z) * (180.0 / 3.14);
+        float pitch = atan2(sensor_readings.accel.x, sensor_readings.accel.z) * (180.0 / 3.14);
 
-        sensor_readings.tof_a_stamp = millis();
-      }
+        // https://seanboe.me/blog/complementary-filters
+        float gyro_favor = 0.98;
+        pose.rot.x = (gyro_favor) * (pose.rot.x + myICM.gyrX() * dt) + (1.00 - gyro_favor) * (roll);
+        pose.rot.y = (gyro_favor) * (pose.rot.y - myICM.gyrY() * dt) + (1.00 - gyro_favor) * (pitch);
 
-      distanceSensorB.startRanging();
-      if(distanceSensorB.checkForDataReady()){
-        sensor_readings.tof_b = distanceSensorB.getDistance();
-        distanceSensorB.clearInterrupt();
+        pose.rot.stamp = millis();
 
-        sensor_readings.tof_b_stamp = millis();
-      }      
+        if(data_buffers.enabled[POSE]){
+          data_buffers.pose_rot.Append(pose.rot);
+        }
+      }  
     }
-    void update_pose(){
-      // https://www.nxp.com/docs/en/application-note/AN3461.pdf
-      float roll= atan2(sensor_readings.accel.y, sensor_readings.accel.z) * 180 / 3.14;
-      float pitch = atan2(sensor_readings.accel.x, sensor_readings.accel.z) * 180 / 3.14;
 
-      // https://seanboe.me/blog/complementary-filters
-      float gyro_favor = 0.96;
-      float dt = millis() - sensor_readings.imu_stamp;
-      pose.rot.x = (gyro_favor) * (pose.rot.x + (sensor_readings.gyro.x * (1.00 / dt))) + (1.00 - gyro_favor) * (roll);
-      pose.rot.y = (gyro_favor) * (pose.rot.y + (sensor_readings.gyro.y * (1.00 / dt))) + (1.00 - gyro_favor) * (pitch);
+    BUFFER_TYPE string_to_buf_type(char *str){
+      if(strcmp(str, "GYRO") == 0){
+        return GYRO;
+      }
+      if(strcmp(str, "ACCEL") == 0){
+        return ACCEL;
+      }
+      if(strcmp(str, "MAG") == 0){
+        return MAG;
+      }
+      if(strcmp(str, "TOF") == 0){
+        return TOF;
+      }
+      if(strcmp(str, "POSE") == 0){
+        return POSE;
+      }
+      return NA;
+    }
+};
+
+class BLE_HANDLER{
+  private:
+    BLEService testService{BLE_UUID_TEST_SERVICE};
+
+    BLECStringCharacteristic rx_characteristic_string{BLE_UUID_RX_STRING, BLEWrite, MAX_MSG_SIZE};
+
+    BLEFloatCharacteristic tx_characteristic_float{BLE_UUID_TX_FLOAT, BLERead | BLENotify};
+    BLECStringCharacteristic tx_characteristic_string{BLE_UUID_TX_STRING, BLERead | BLENotify, MAX_MSG_SIZE};
+
+    // RX
+    RobotCommand robot_cmd{":|"};
+
+    // TX
+    EString tx_estring_value;
+    float tx_float_value{0.0};
+
+    enum CommandTypes
+    {
+        PING,
+        ECHO,
+        GET_TIME_MILLIS,
+        ENABLE_BUFFER,
+        RETRIEVE_BUFFER
+    };
+
+    int interval = 500;
+    long int last_write;
+
+    CAR  *the_car;    
+    
+  public:  
+    void setup(CAR *car){
+      the_car = car;
+
+      Wire.begin();
+
+      Serial.begin(115200);
+
+      Serial.println("BLE Booting...");
+
+      BLE.begin();
+      
+      // Set advertised local name and service
+      BLE.setDeviceName("Artemis BLE");
+      BLE.setLocalName("Artemis BLE");
+      BLE.setAdvertisedService(testService);
+
+      // Add BLE characteristics
+      testService.addCharacteristic(tx_characteristic_float);
+      testService.addCharacteristic(tx_characteristic_string);
+      testService.addCharacteristic(rx_characteristic_string);
+
+      // Add BLE service
+      BLE.addService(testService);
+
+      // Initial values for characteristics
+      // Set initial values to prevent errors when reading for the first time on central devices
+      tx_characteristic_float.writeValue(0.0);
+      tx_estring_value.clear();
+      tx_estring_value.append("init");
+      tx_characteristic_string.writeValue(tx_estring_value.c_str());
+
+      // Output MAC Address
+      Serial.print("Advertising BLE with MAC: ");
+      Serial.println(BLE.address());
+
+      BLE.advertise();
+
+      Serial.println("BLE successfully booted!");
+    }
+
+    void update(){
+      BLEDevice central = BLE.central();
+
+      if (central) {
+        Serial.print("Connected to: ");
+        Serial.println(central.address());
+
+        // While central is connected
+        while (central.connected()) {
+            read_data();
+        }
+
+        Serial.println("Disconnected");
+      }
+    }
+
+    void handle_command(){
+      robot_cmd.set_cmd_string(rx_characteristic_string.value(),
+                              rx_characteristic_string.valueLength());
+
+      bool success;
+      int cmd_type = -1;
+
+      success = robot_cmd.get_command_type(cmd_type);
+      
+      if (!success) {
+          return;
+      }
+
+
+      char char_arr[MAX_MSG_SIZE];
+
+      switch (cmd_type) {
+        case PING:
+            tx_estring_value.clear();
+            tx_estring_value.append("PONG");
+            tx_characteristic_string.writeValue(tx_estring_value.c_str());
+
+            break;
+
+        case ECHO:
+          // Extract the next value from the command string as a character array
+          success = robot_cmd.get_next_value(char_arr);
+          if (!success)
+              return;
+
+          tx_estring_value.clear();
+          tx_estring_value.append("Robot says -> ");
+          tx_estring_value.append(char_arr);
+          tx_estring_value.append(" :)");
+          tx_characteristic_string.writeValue(tx_estring_value.c_str());             
+          
+          break;
+        
+        case GET_TIME_MILLIS:
+          tx_estring_value.clear();
+          tx_estring_value.append("Time: ");
+          tx_estring_value.append((float)millis());
+          tx_characteristic_string.writeValue(tx_estring_value.c_str());
+          break;
+
+        case ENABLE_BUFFER:{
+          success = robot_cmd.get_next_value(char_arr);
+          if (!success)
+              return;
+          CAR::BUFFER_TYPE buf = the_car->string_to_buf_type(char_arr);
+          the_car->data_buffers.enabled[buf] = true;
+
+        } break;
+
+        case RETRIEVE_BUFFER:{
+          CAR::BUFFER_TYPE buf = the_car->string_to_buf_type(char_arr);
+
+
+
+          the_car->data_buffers.enabled[buf] = false;
+        } break;
+
+        default:
+          Serial.print("Invalid Command Type: ");
+          Serial.println(cmd_type);
+          break;
+      }
+    }
+
+    void send_data_buffer(LinkedList<THREE_AXIS> *buf){
+      if(!buf->moveToStart()) return;
+      do{
+        send_data_point(&(buf->getCurrent()));
+      }while(buf->next());
+    }
+
+    void send_data_buffer(LinkedList<TOF_DATA> *buf){
+      if(!buf->moveToStart()) return;
+      do{
+        send_data_point(&(buf->getCurrent()));
+      }while(buf->next());
+    }
+
+    void send_data_point(THREE_AXIS *send){
+      tx_estring_value.clear();
+
+      tx_estring_value.append("Time: ");
+      tx_estring_value.append((int)send->stamp);
+      tx_estring_value.append(" | ");
+
+      tx_estring_value.append("X: ");
+      tx_estring_value.append(send->x);
+      tx_estring_value.append(" | ");
+
+      tx_estring_value.append("Y: ");
+      tx_estring_value.append(send->y);
+      tx_estring_value.append(" | ");
+
+
+      tx_estring_value.append("Z: ");
+      tx_estring_value.append(send->z);
+      
+      tx_characteristic_string.writeValue(tx_estring_value.c_str());   
+    }
+
+    void send_data_point(TOF_DATA *send){
+      tx_estring_value.clear();
+
+      tx_estring_value.append("Time: ");
+      tx_estring_value.append((int)send->stamp);
+      tx_estring_value.append(" | ");
+
+      tx_estring_value.append("Dist: ");
+      tx_estring_value.append(send->dist);
+      
+      tx_characteristic_string.writeValue(tx_estring_value.c_str());  
+    }
+
+    void read_data()
+    {
+        // Query if the characteristic value has been written by another BLE device
+        if (rx_characteristic_string.written()) {
+            handle_command();
+        }
     }
 };
 
 CAR my_car;
+BLE_HANDLER my_ble_handler;
 
 void setup()
 {
+  my_ble_handler.setup(&my_car);
   my_car.setup();
 }
 
 void loop()
 {
-  my_car.update();
-}
-
-// Below here are some helper functions to print the data nicely!
-
-void printPaddedInt16b(int16_t val)
-{
-  if (val > 0)
-  {
-    SERIAL_PORT.print(" ");
-    if (val < 10000)
-    {
-      SERIAL_PORT.print("0");
-    }
-    if (val < 1000)
-    {
-      SERIAL_PORT.print("0");
-    }
-    if (val < 100)
-    {
-      SERIAL_PORT.print("0");
-    }
-    if (val < 10)
-    {
-      SERIAL_PORT.print("0");
-    }
-  }
-  else
-  {
-    SERIAL_PORT.print("-");
-    if (abs(val) < 10000)
-    {
-      SERIAL_PORT.print("0");
-    }
-    if (abs(val) < 1000)
-    {
-      SERIAL_PORT.print("0");
-    }
-    if (abs(val) < 100)
-    {
-      SERIAL_PORT.print("0");
-    }
-    if (abs(val) < 10)
-    {
-      SERIAL_PORT.print("0");
-    }
-  }
-  SERIAL_PORT.print(abs(val));
-}
-
-void printRawAGMT(ICM_20948_AGMT_t agmt)
-{
-  SERIAL_PORT.print("RAW. Acc [ ");
-  printPaddedInt16b(agmt.acc.axes.x);
-  SERIAL_PORT.print(", ");
-  printPaddedInt16b(agmt.acc.axes.y);
-  SERIAL_PORT.print(", ");
-  printPaddedInt16b(agmt.acc.axes.z);
-  SERIAL_PORT.print(" ], Gyr [ ");
-  printPaddedInt16b(agmt.gyr.axes.x);
-  SERIAL_PORT.print(", ");
-  printPaddedInt16b(agmt.gyr.axes.y);
-  SERIAL_PORT.print(", ");
-  printPaddedInt16b(agmt.gyr.axes.z);
-  SERIAL_PORT.print(" ], Mag [ ");
-  printPaddedInt16b(agmt.mag.axes.x);
-  SERIAL_PORT.print(", ");
-  printPaddedInt16b(agmt.mag.axes.y);
-  SERIAL_PORT.print(", ");
-  printPaddedInt16b(agmt.mag.axes.z);
-  SERIAL_PORT.print(" ], Tmp [ ");
-  printPaddedInt16b(agmt.tmp.val);
-  SERIAL_PORT.print(" ]");
-  SERIAL_PORT.println();
-}
-
-void printFormattedFloat(float val, uint8_t leading, uint8_t decimals)
-{
-  float aval = abs(val);
-  if (val < 0)
-  {
-    SERIAL_PORT.print("-");
-  }
-  else
-  {
-    SERIAL_PORT.print(" ");
-  }
-  for (uint8_t indi = 0; indi < leading; indi++)
-  {
-    uint32_t tenpow = 0;
-    if (indi < (leading - 1))
-    {
-      tenpow = 1;
-    }
-    for (uint8_t c = 0; c < (leading - 1 - indi); c++)
-    {
-      tenpow *= 10;
-    }
-    if (aval < tenpow)
-    {
-      SERIAL_PORT.print("0");
-    }
-    else
-    {
-      break;
-    }
-  }
-  if (val < 0)
-  {
-    SERIAL_PORT.print(-val, decimals);
-  }
-  else
-  {
-    SERIAL_PORT.print(val, decimals);
-  }
-}
-
-#ifdef USE_SPI
-void printScaledAGMT(ICM_20948_SPI *sensor)
-{
-#else
-void printScaledAGMT(ICM_20948_I2C *sensor)
-{
-#endif
-  SERIAL_PORT.print("Scaled. Acc (mg) [ ");
-  printFormattedFloat(sensor->accX(), 5, 2);
-  SERIAL_PORT.print(", ");
-  printFormattedFloat(sensor->accY(), 5, 2);
-  SERIAL_PORT.print(", ");
-  printFormattedFloat(sensor->accZ(), 5, 2);
-  SERIAL_PORT.print(" ], Gyr (DPS) [ ");
-  printFormattedFloat(sensor->gyrX(), 5, 2);
-  SERIAL_PORT.print(", ");
-  printFormattedFloat(sensor->gyrY(), 5, 2);
-  SERIAL_PORT.print(", ");
-  printFormattedFloat(sensor->gyrZ(), 5, 2);
-  SERIAL_PORT.print(" ], Mag (uT) [ ");
-  printFormattedFloat(sensor->magX(), 5, 2);
-  SERIAL_PORT.print(", ");
-  printFormattedFloat(sensor->magY(), 5, 2);
-  SERIAL_PORT.print(", ");
-  printFormattedFloat(sensor->magZ(), 5, 2);
-  SERIAL_PORT.print(" ], Tmp (C) [ ");
-  printFormattedFloat(sensor->temp(), 5, 2);
-  SERIAL_PORT.print(" ]");
-  SERIAL_PORT.println();
-}
-
-void plotAccel(ICM_20948_I2C *sensor)
-{
-  printFormattedFloat(sensor->accX(), 5, 2);
-  SERIAL_PORT.print(" ");
-  printFormattedFloat(sensor->accY(), 5, 2);
-  SERIAL_PORT.print(" ");
-  printFormattedFloat(sensor->accZ(), 5, 2);
-  SERIAL_PORT.println();
-}
-
-void plotGyro(ICM_20948_I2C *sensor)
-{
-  printFormattedFloat(sensor->gyrX(), 5, 2);
-  SERIAL_PORT.print(" ");
-  printFormattedFloat(sensor->gyrY(), 5, 2);
-  SERIAL_PORT.print(" ");
-  printFormattedFloat(sensor->gyrZ(), 5, 2);
-  SERIAL_PORT.println();
-}
-
-void plotPitchRollYaw(ICM_20948_I2C *sensor)
-{
-  float pitch = atan2(sensor->accY(), sensor->accX()) * 180 / 3.14;
-  float roll = atan2(sensor->accX(), sensor->accZ()) * 180 / 3.14;
-  printFormattedFloat(pitch, 5, 2);
-  SERIAL_PORT.print(" ");
-  printFormattedFloat(roll, 5, 2);
-  SERIAL_PORT.println();
-}
-
-void integrate_gyro(ICM_20948_I2C *sensor)
-{
-  
+ my_ble_handler.update();
+ my_car.update();
 }

@@ -1,3 +1,4 @@
+#include "LinkedList.h"
 
 #include "BLECStringCharacteristic.h"
 #include "EString.h"
