@@ -5,6 +5,7 @@
 
 #include "ICM_20948.h" // Click here to get the library: http://librarymanager/All#SparkFun_ICM_20948_IMU
 
+#include <Wire.h>
 #include "SparkFun_VL53L1X.h" // Click here to get the library: http://librarymanager/All#SparkFun_VL53L1X
 
 #include "LinkedList.h" // Linked List implementation: https://stackoverflow.com/questions/9986591/vectors-in-arduino
@@ -35,8 +36,8 @@ class CAR{
     // SENSORS
     ICM_20948_I2C myICM;
 
-    SFEVL53L1X distanceSensorA;
-    SFEVL53L1X distanceSensorB;
+    SFEVL53L1X distanceSensorA{Wire, 7, -1};
+    SFEVL53L1X distanceSensorB{Wire, 8, -1};
 
     // DATA STRUCTURES
     struct {
@@ -50,7 +51,6 @@ class CAR{
 
     struct {
       THREE_AXIS rot;
-      THREE_AXIS pos;
     } pose;
 
     long int start_time;
@@ -64,7 +64,6 @@ class CAR{
       LinkedList<TOF_DATA> tofA;
       LinkedList<TOF_DATA> tofB;
       LinkedList<THREE_AXIS> pose_rot;
-      LinkedList<THREE_AXIS> pose_pos;
 
 
       bool enabled[5];
@@ -107,8 +106,6 @@ class CAR{
       pose.rot.y = 0;
 
       Serial.println("Initallizing ToF Sensors...");
-      distanceSensorA = SFEVL53L1X(Wire, 7, -1);
-      distanceSensorB = SFEVL53L1X(Wire, 8, -1);
       distanceSensorA.sensorOff();
       delay(500);
       distanceSensorA.sensorOn();
@@ -129,7 +126,7 @@ class CAR{
       distanceSensorB.sensorOn(); // Enable B
       initialized = false;
       while (!initialized){
-        if(distanceSensorA.begin() != 0) //Begin returns 0 on a good init
+        if(distanceSensorB.begin() != 0) //Begin returns 0 on a good init
         {
           Serial.println("Sensor A failed to begin. Trying again...");
           delay(500);
@@ -140,8 +137,8 @@ class CAR{
       Serial.println("Sensor A and B Online!");
       distanceSensorA.setDistanceModeLong();
       distanceSensorB.setDistanceModeLong();
-      distanceSensorA.startRanging(); 
-      distanceSensorB.startRanging(); 
+      distanceSensorA.startRanging();
+      distanceSensorB.startRanging();
    
       pinMode(LED_BUILTIN, OUTPUT);
       digitalWrite(LED_BUILTIN, HIGH);  // turn the LED on (HIGH is the voltage level)
@@ -184,8 +181,6 @@ class CAR{
 
         sensor_readings.tof_a.stamp = millis();
 
-        distanceSensorA.startRanging(); 
-
         if(data_buffers.enabled[TOF]){
           data_buffers.tofA.Append(sensor_readings.tof_a);
         }
@@ -196,8 +191,6 @@ class CAR{
         distanceSensorB.clearInterrupt();
 
         sensor_readings.tof_b.stamp = millis();
-
-        distanceSensorB.startRanging(); 
 
         if(data_buffers.enabled[TOF]){
           data_buffers.tofB.Append(sensor_readings.tof_b);
@@ -235,7 +228,6 @@ class CAR{
         sensor_readings.gyro_delta.stamp = millis();
 
         float dt = (float)(millis() - sensor_readings.gyro.stamp) / 1000.0;
-        //Serial.println(dt);
         sensor_readings.gyro.x += myICM.gyrX() * dt;
         sensor_readings.gyro.y -= myICM.gyrY() * dt;
         sensor_readings.gyro.z += myICM.gyrZ() * dt;
@@ -304,13 +296,16 @@ class BLE_HANDLER{
         ECHO,
         GET_TIME_MILLIS,
         ENABLE_BUFFER,
-        RETRIEVE_BUFFER
+        RETRIEVE_BUFFER,
+        DISABLE_BUFFER
     };
 
     int interval = 500;
     long int last_write;
 
-    CAR  *the_car;    
+    CAR  *the_car;
+
+    bool connected = false; 
     
   public:  
     void setup(CAR *car){
@@ -357,15 +352,19 @@ class BLE_HANDLER{
       BLEDevice central = BLE.central();
 
       if (central) {
-        Serial.print("Connected to: ");
-        Serial.println(central.address());
-
-        // While central is connected
-        while (central.connected()) {
-            read_data();
+        if(!connected){
+          Serial.print("Connected to: ");
+          Serial.println(central.address());
         }
 
-        Serial.println("Disconnected");
+        // While central is connected
+        if (central.connected()) {
+          connected = true;
+          read_data();
+        }else if(connected){
+          connected = false;
+          Serial.println("Disconnected");          
+        }
       }
     }
 
@@ -419,16 +418,99 @@ class BLE_HANDLER{
           if (!success)
               return;
           CAR::BUFFER_TYPE buf = the_car->string_to_buf_type(char_arr);
+          if(buf != CAR::NA){
+            Serial.print("Enabling buffer: ");
+            Serial.println(char_arr);
+          }else{
+            Serial.print("BLE attempted to enable unknown buffer: ");
+            Serial.println(char_arr);
+          }
           the_car->data_buffers.enabled[buf] = true;
 
         } break;
 
-        case RETRIEVE_BUFFER:{
+        case DISABLE_BUFFER:{
+          success = robot_cmd.get_next_value(char_arr);
+          if (!success)
+              return;
           CAR::BUFFER_TYPE buf = the_car->string_to_buf_type(char_arr);
-
-
-
+          if(buf != CAR::NA){
+            Serial.print("Disabling buffer: ");
+            Serial.println(char_arr);
+          }else{
+            Serial.print("BLE attempted to disable unknown buffer: ");
+            Serial.println(char_arr);
+          }
           the_car->data_buffers.enabled[buf] = false;
+
+        } break;
+
+        case RETRIEVE_BUFFER:{
+          success = robot_cmd.get_next_value(char_arr);
+          if (!success)
+              return;
+          CAR::BUFFER_TYPE buf = the_car->string_to_buf_type(char_arr);
+          if(buf != CAR::NA){
+            the_car->data_buffers.enabled[buf] = false;
+
+            Serial.print("Sending buffer: ");
+            Serial.println(char_arr);
+            tx_estring_value.clear();
+            tx_estring_value.append("<START BUFFER: ");
+            tx_estring_value.append(char_arr);
+            tx_estring_value.append(">");
+            tx_characteristic_string.writeValue(tx_estring_value.c_str());   
+
+            if(buf == CAR::ACCEL){
+              send_data_buffer(&(the_car->data_buffers.accel));
+              the_car->data_buffers.accel.Clear();
+            }
+            if(buf == CAR::GYRO){
+              send_data_buffer(&(the_car->data_buffers.gyro));
+              the_car->data_buffers.gyro.Clear();
+            }
+            if(buf == CAR::MAG){
+              send_data_buffer(&(the_car->data_buffers.mag));
+              the_car->data_buffers.gyro.Clear();
+            }
+            if(buf == CAR::TOF){
+              tx_estring_value.clear();
+              tx_estring_value.append("[START TOF_A]");
+              tx_characteristic_string.writeValue(tx_estring_value.c_str());   
+              send_data_buffer(&(the_car->data_buffers.tofA));
+              the_car->data_buffers.tofA.Clear();
+              tx_estring_value.clear();
+              tx_estring_value.append("[END TOF_A]");
+              tx_characteristic_string.writeValue(tx_estring_value.c_str());
+
+              tx_estring_value.clear();
+              tx_estring_value.append("[START TOF_B]");
+              tx_characteristic_string.writeValue(tx_estring_value.c_str());   
+              send_data_buffer(&(the_car->data_buffers.tofB));
+              the_car->data_buffers.tofB.Clear();
+              tx_estring_value.clear();
+              tx_estring_value.append("[END TOF_B]");
+              tx_characteristic_string.writeValue(tx_estring_value.c_str());   
+            }
+            if(buf == CAR::POSE){
+              send_data_buffer(&(the_car->data_buffers.pose_rot));
+              the_car->data_buffers.pose_rot.Clear();
+            }
+            
+            tx_estring_value.clear();
+            tx_estring_value.append("<END BUFFER: ");
+            tx_estring_value.append(char_arr);
+            tx_estring_value.append(">");
+            tx_characteristic_string.writeValue(tx_estring_value.c_str());              
+          }else{
+            Serial.print("BLE requested unknown buffer: ");
+            Serial.println(char_arr);
+            tx_estring_value.clear();
+            tx_estring_value.append("Unknown buffer: ");
+            tx_estring_value.append(char_arr);
+            tx_characteristic_string.writeValue(tx_estring_value.c_str());  
+            break;
+          } 
         } break;
 
         default:
@@ -439,14 +521,20 @@ class BLE_HANDLER{
     }
 
     void send_data_buffer(LinkedList<THREE_AXIS> *buf){
-      if(!buf->moveToStart()) return;
+      if(!buf->moveToStart()){
+        Serial.println("No data to report. Make sure to enable buffer before requesting data.");
+        return;
+      }
       do{
         send_data_point(&(buf->getCurrent()));
       }while(buf->next());
     }
 
     void send_data_buffer(LinkedList<TOF_DATA> *buf){
-      if(!buf->moveToStart()) return;
+      if(!buf->moveToStart()){
+        Serial.println("No data to report. Make sure to enable buffer before requesting data.");
+        return;
+      }
       do{
         send_data_point(&(buf->getCurrent()));
       }while(buf->next());

@@ -8,7 +8,7 @@
 #include <Wire.h>
 #include "SparkFun_VL53L1X.h" //Click here to get the library: http://librarymanager/All#SparkFun_VL53L1X
 
-SFEVL53L1X distanceSensorA(Wire, -1, -1);
+SFEVL53L1X distanceSensorA(Wire, 7, -1);
 SFEVL53L1X distanceSensorB(Wire, 8, -1);
 
 //////////// BLE UUIDs ////////////
@@ -217,36 +217,40 @@ setup()
     Serial.println(BLE.address());
 
     BLE.advertise();
-
+    bool initialized = false;
+      distanceSensorA.sensorOff();
+      delay(500);
+      distanceSensorA.sensorOn();
       distanceSensorB.sensorOff();
-      if (distanceSensorA.begin() != 0) //Begin returns 0 on a good init
-      {
-        Serial.println("Sensor A failed to begin. Please check wiring. Freezing...");
-        while (1)
-          ;
+      initialized = false;
+      while (!initialized){
+        if(distanceSensorA.begin() != 0) //Begin returns 0 on a good init
+        {
+          Serial.println("Sensor A failed to begin. Trying again...");
+          delay(500);
+        }else{
+          initialized = true;          
+        }
       }
       Serial.println("Sensor A Online! Changing I2C address.");
       distanceSensorA.setI2CAddress(0x38);
       Serial.println("Enabling sensor B...");
       distanceSensorB.sensorOn(); // Enable B
-      if (distanceSensorB.begin() != 0) //Begin returns 0 on a good init
-      {
-        Serial.println("Sensor B failed to begin. Please check wiring. Freezing...");
-        while (1)
-          ;
-      }
-      if(distanceSensorA.getI2CAddress() == distanceSensorB.getI2CAddress()){
-        Serial.println("Error disambiguating distance sensor I2C addresses. Freezing...");
-        while (1)
-          ;
+      initialized = false;
+      while (!initialized){
+        if(distanceSensorA.begin() != 0) //Begin returns 0 on a good init
+        {
+          Serial.println("Sensor A failed to begin. Trying again...");
+          delay(500);
+        }else{
+          initialized = true;          
+        }
       }
       Serial.println("Sensor A and B Online!");
-      Serial.print("Sensor A I2C address = ");
-      Serial.println(distanceSensorA.getI2CAddress());
-      Serial.print("Sensor B I2C address = ");
-      Serial.println(distanceSensorB.getI2CAddress());
       distanceSensorA.setDistanceModeLong();
       distanceSensorB.setDistanceModeLong();
+      distanceSensorA.startRanging();
+      distanceSensorB.startRanging();
 }
 
 void
@@ -281,21 +285,25 @@ loop()
 {
     // Listen for connections
     BLEDevice central = BLE.central();
+    if(distanceSensorA.checkForDataReady()){
+        Serial.println(distanceSensorA.getDistance());
+        distanceSensorA.clearInterrupt();
+      }
 
     // If a central is connected to the peripheral
-    if (central) {
-        Serial.print("Connected to: ");
-        Serial.println(central.address());
+    // if (central) {
+    //     Serial.print("Connected to: ");
+    //     Serial.println(central.address());
 
-        // While central is connected
-        while (central.connected()) {
-            // Send data
-            write_data();
+    //     // While central is connected
+    //     while (central.connected()) {
+    //         // Send data
+    //         write_data();
 
-            // Read data
-            read_data();
-        }
+    //         // Read data
+    //         read_data();
+    //     }
 
-        Serial.println("Disconnected");
-    }
+    //     Serial.println("Disconnected");
+    // }
 }

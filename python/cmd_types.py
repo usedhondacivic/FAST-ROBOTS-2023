@@ -7,3 +7,4 @@ class CMD(Enum):
     GET_TIME_MILLIS = 2
     ENABLE_BUFFER = 3
     RETRIEVE_BUFFER = 4
+    DISABLE_BUFFER = 5
