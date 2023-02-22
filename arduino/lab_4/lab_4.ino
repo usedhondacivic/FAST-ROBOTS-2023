@@ -27,7 +27,8 @@ typedef struct {
 } THREE_AXIS;
 
 typedef struct {
-  int dist;
+  int distA;
+  int distB;
   long int stamp;  
 } TOF_DATA;
 
@@ -45,8 +46,7 @@ class CAR{
       THREE_AXIS gyro_delta;
       THREE_AXIS gyro;
       THREE_AXIS mag;
-      TOF_DATA tof_a;
-      TOF_DATA tof_b;
+      TOF_DATA tof;
     } sensor_readings;
 
     struct {
@@ -61,8 +61,7 @@ class CAR{
       LinkedList<THREE_AXIS> accel;
       LinkedList<THREE_AXIS> gyro;
       LinkedList<THREE_AXIS> mag;
-      LinkedList<TOF_DATA> tofA;
-      LinkedList<TOF_DATA> tofB;
+      LinkedList<TOF_DATA> tof;
       LinkedList<THREE_AXIS> pose_rot;
 
 
@@ -162,40 +161,23 @@ class CAR{
 
     void update(){
       update_sensor_readings();
-      // if(millis() - start_time > 1000 && millis() - start_time < 2000){
-      //   data_buffers.enabled[data_buffers.ACCEL] = true;
-      // }else{
-      //   if(data_buffers.enabled[data_buffers.ACCEL]){
-      //     Serial.print("Data points collected in one second: ");
-      //     Serial.println(data_buffers.accel.getLength());          
-      //   }
-      //   data_buffers.enabled[data_buffers.ACCEL] = false;
-      // }
     }  
     
     void update_sensor_readings(){
       //Update TOF
-      if(distanceSensorA.checkForDataReady()){
-        sensor_readings.tof_a.dist = distanceSensorA.getDistance();
+      if(distanceSensorA.checkForDataReady() && distanceSensorB.checkForDataReady()){
+        sensor_readings.tof.distA = distanceSensorA.getDistance();
         distanceSensorA.clearInterrupt();
 
-        sensor_readings.tof_a.stamp = millis();
-
-        if(data_buffers.enabled[TOF]){
-          data_buffers.tofA.Append(sensor_readings.tof_a);
-        }
-      }
-
-      if(distanceSensorB.checkForDataReady()){
-        sensor_readings.tof_b.dist = distanceSensorB.getDistance();
+        sensor_readings.tof.distB = distanceSensorB.getDistance();
         distanceSensorB.clearInterrupt();
 
-        sensor_readings.tof_b.stamp = millis();
+        sensor_readings.tof.stamp = millis();
 
         if(data_buffers.enabled[TOF]){
-          data_buffers.tofB.Append(sensor_readings.tof_b);
+          data_buffers.tof.Append(sensor_readings.tof);
         }
-      }    
+      }
 
       // Update IMU
       if (myICM.dataReady())
@@ -245,6 +227,7 @@ class CAR{
         float gyro_favor = 0.98;
         pose.rot.x = (gyro_favor) * (pose.rot.x + myICM.gyrX() * dt) + (1.00 - gyro_favor) * (roll);
         pose.rot.y = (gyro_favor) * (pose.rot.y - myICM.gyrY() * dt) + (1.00 - gyro_favor) * (pitch);
+        pose.rot.z = sensor_readings.gyro.z;
 
         pose.rot.stamp = millis();
 
@@ -456,7 +439,7 @@ class BLE_HANDLER{
             Serial.print("Sending buffer: ");
             Serial.println(char_arr);
             tx_estring_value.clear();
-            tx_estring_value.append("<START BUFFER: ");
+            tx_estring_value.append("<START BUFFER ");
             tx_estring_value.append(char_arr);
             tx_estring_value.append(">");
             tx_characteristic_string.writeValue(tx_estring_value.c_str());   
@@ -474,23 +457,8 @@ class BLE_HANDLER{
               the_car->data_buffers.gyro.Clear();
             }
             if(buf == CAR::TOF){
-              tx_estring_value.clear();
-              tx_estring_value.append("[START TOF_A]");
-              tx_characteristic_string.writeValue(tx_estring_value.c_str());   
-              send_data_buffer(&(the_car->data_buffers.tofA));
-              the_car->data_buffers.tofA.Clear();
-              tx_estring_value.clear();
-              tx_estring_value.append("[END TOF_A]");
-              tx_characteristic_string.writeValue(tx_estring_value.c_str());
-
-              tx_estring_value.clear();
-              tx_estring_value.append("[START TOF_B]");
-              tx_characteristic_string.writeValue(tx_estring_value.c_str());   
-              send_data_buffer(&(the_car->data_buffers.tofB));
-              the_car->data_buffers.tofB.Clear();
-              tx_estring_value.clear();
-              tx_estring_value.append("[END TOF_B]");
-              tx_characteristic_string.writeValue(tx_estring_value.c_str());   
+              send_data_buffer(&(the_car->data_buffers.tof));
+              the_car->data_buffers.tof.Clear();
             }
             if(buf == CAR::POSE){
               send_data_buffer(&(the_car->data_buffers.pose_rot));
@@ -498,7 +466,7 @@ class BLE_HANDLER{
             }
             
             tx_estring_value.clear();
-            tx_estring_value.append("<END BUFFER: ");
+            tx_estring_value.append("<END BUFFER ");
             tx_estring_value.append(char_arr);
             tx_estring_value.append(">");
             tx_characteristic_string.writeValue(tx_estring_value.c_str());              
@@ -567,10 +535,15 @@ class BLE_HANDLER{
 
       tx_estring_value.append("Time: ");
       tx_estring_value.append((int)send->stamp);
-      tx_estring_value.append(" | ");
 
-      tx_estring_value.append("Dist: ");
-      tx_estring_value.append(send->dist);
+      tx_estring_value.append(" | ");
+      tx_estring_value.append("DistA: ");
+      tx_estring_value.append(send->distA);
+
+
+      tx_estring_value.append(" | ");
+      tx_estring_value.append("DistB: ");
+      tx_estring_value.append(send->distB);
       
       tx_characteristic_string.writeValue(tx_estring_value.c_str());  
     }
