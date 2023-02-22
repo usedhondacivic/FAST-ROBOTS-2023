@@ -142,7 +142,9 @@ pre {
     width: 100%;
 }
 
-code {
+code {}
+
+pre {
     background-color: #141414;
     display: block;
     padding: 15px;
