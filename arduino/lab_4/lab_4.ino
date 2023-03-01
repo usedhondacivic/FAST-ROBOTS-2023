@@ -156,11 +156,43 @@ class CAR{
 
       start_time = millis();
 
+      pinMode(11, OUTPUT);
+
       Serial.println("Robot successfully booted!");   
     }
 
     void update(){
       update_sensor_readings();
+      //lowest = 40
+      // ballanced = 150 / 190
+      if(millis() - start_time < 1000){
+        analogWrite(15, 150);
+        analogWrite(12, 0);
+        analogWrite(13, 0);
+        analogWrite(14, 190);
+      }else if(millis() - start_time < 1500){
+        analogWrite(15, 150);
+        analogWrite(12, 0);
+        analogWrite(13, 200);
+        analogWrite(14, 0);
+      }
+      else if(millis() - start_time < 2500){
+        analogWrite(15, 0);
+        analogWrite(12, 150);
+        analogWrite(13, 190);
+        analogWrite(14, 0);
+      }
+      else if(millis() - start_time < 3500){
+        analogWrite(15, 0);
+        analogWrite(12, 150);
+        analogWrite(13, 0);
+        analogWrite(14, 150);
+      }else{
+        analogWrite(15, 255);
+        analogWrite(12, 255);
+        analogWrite(13, 255);
+        analogWrite(14, 255);
+      }
     }  
     
     void update_sensor_readings(){
