@@ -19,6 +19,61 @@
 
 #define SERIAL_PORT Serial
 
+
+class PID_CONTROLLER{
+  private:
+    double p;
+    double i;
+    double d;
+
+    double integrator = 0;
+    double z_prev = NULL;
+    unsigned long last_time = NULL;
+
+  public:
+    double output = 0;
+    
+    PID_CONTROLLER(){
+      p = 0;
+      i = 0;
+      d = 0;
+    }
+
+    PID_CONTROLLER(double _p, double _i, double _d){
+      p = _p;
+      i = _i;
+      d = _d;
+    }
+
+    void step(double u, double z){
+      unsigned long now = millis();
+      if(z_prev == NULL){
+        z_prev = z;
+      }
+      if(last_time == NULL){
+        last_time = millis();
+      }
+      int dt = now - last_time;
+      double err = u - z;
+
+      integrator += err;      
+
+      double dz = z - z_prev;
+      double der = -dz/dt;
+
+      last_time = millis();
+      z_prev = z;
+
+      output = p * err + i * integrator + d * der;
+    }
+
+    void set_gains(double _p, double _i, double _d){
+      p = _p;
+      i = _i;
+      d = _d;
+    }
+};
+
 typedef struct {
   float x;
   float y;
@@ -55,8 +110,13 @@ class CAR{
 
     long int start_time;
 
+    bool robot_enabled;
+
+    PID_CONTROLLER angle_controller;
+
   public:
-    enum  BUFFER_TYPE {ACCEL, GYRO, MAG, TOF, POSE, NA};
+    enum BUFFER_TYPE {ACCEL, GYRO, MAG, TOF, POSE, NA};
+    static const int num_buffers = 5;
     struct {
       LinkedList<THREE_AXIS> accel;
       LinkedList<THREE_AXIS> gyro;
@@ -64,9 +124,20 @@ class CAR{
       LinkedList<TOF_DATA> tof;
       LinkedList<THREE_AXIS> pose_rot;
 
-
-      bool enabled[5];
+      bool enabled[num_buffers];
     } data_buffers;
+
+    enum PID_CONTROLLER_TYPE{
+      ROTATION
+    };
+    
+    static const int num_pid_controllers = 1;
+
+    struct {
+      PID_CONTROLLER pid[num_pid_controllers];
+
+      bool enabled[num_pid_controllers];
+    } pid_controllers;
 
     void setup(){
       Serial.begin(115200);
@@ -154,46 +225,41 @@ class CAR{
       data_buffers.enabled[TOF] = false;
       data_buffers.enabled[POSE] = false;
 
-      start_time = millis();
+      robot_enabled = false;
 
-      pinMode(11, OUTPUT);
-
-      Serial.println("Robot successfully booted!");   
+      Serial.println("Robot successfully booted!");
     }
 
     void update(){
+      if(!robot_enabled){
+        return;
+      }
       update_sensor_readings();
-      //lowest = 40
-      // ballanced = 150 / 190
-      if(millis() - start_time < 1000){
-        analogWrite(15, 150);
-        analogWrite(12, 0);
-        analogWrite(13, 0);
-        analogWrite(14, 190);
-      }else if(millis() - start_time < 1500){
-        analogWrite(15, 150);
-        analogWrite(12, 0);
-        analogWrite(13, 200);
-        analogWrite(14, 0);
-      }
-      else if(millis() - start_time < 2500){
-        analogWrite(15, 0);
-        analogWrite(12, 150);
-        analogWrite(13, 190);
-        analogWrite(14, 0);
-      }
-      else if(millis() - start_time < 3500){
-        analogWrite(15, 0);
-        analogWrite(12, 150);
-        analogWrite(13, 0);
-        analogWrite(14, 150);
-      }else{
-        analogWrite(15, 255);
-        analogWrite(12, 255);
-        analogWrite(13, 255);
-        analogWrite(14, 255);
-      }
-    }  
+      update_pid_controllers();
+      
+      set_wheel_output(1.0, 1.0);
+    }
+
+    // 1.0 = full forward, -1.0 = full backwards
+    void set_wheel_output(double left, double right){
+      int deadband = 40;
+      int remaining_band = 255-40;
+      int left_sign = left / abs(left);
+      int right_sign = right / abs(right);
+
+      int output_left = left_sign * 40 + left * remaining_band;
+      int output_right = right_sign * 40 + right * remaining_band;
+
+      analogWrite(15, min(output_left, 0));
+      analogWrite(12, max(output_left, 0));
+
+      analogWrite(13, min(output_right, 0));
+      analogWrite(14, max(output_right, 0));
+    }
+
+    void update_pid_controllers(){
+      pid_controllers.pid[ROTATION].step(0, sensor_readings.gyro.z);
+    }
     
     void update_sensor_readings(){
       //Update TOF
@@ -287,6 +353,13 @@ class CAR{
       }
       return NA;
     }
+
+    void set_enabled(bool enable){
+      if(enable && !robot_enabled){
+        start_time = millis();
+      }
+      robot_enabled = enable;
+    }
 };
 
 class BLE_HANDLER{
@@ -310,6 +383,8 @@ class BLE_HANDLER{
         PING,
         ECHO,
         GET_TIME_MILLIS,
+        ENABLE_ROBOT,
+        DISABLE_ROBOT,
         ENABLE_BUFFER,
         RETRIEVE_BUFFER,
         DISABLE_BUFFER
@@ -378,6 +453,7 @@ class BLE_HANDLER{
           read_data();
         }else if(connected){
           connected = false;
+          the_car->set_enabled(false);
           Serial.println("Disconnected");          
         }
       }
@@ -426,6 +502,14 @@ class BLE_HANDLER{
           tx_estring_value.append("Time: ");
           tx_estring_value.append((float)millis());
           tx_characteristic_string.writeValue(tx_estring_value.c_str());
+          break;
+
+        case ENABLE_ROBOT:
+          the_car->set_enabled(true);        
+          break;
+
+        case DISABLE_ROBOT:
+          the_car->set_enabled(false);
           break;
 
         case ENABLE_BUFFER:{
