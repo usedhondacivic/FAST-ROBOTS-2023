@@ -10,3 +10,4 @@ class CMD(Enum):
     ENABLE_BUFFER = 5
     RETRIEVE_BUFFER = 6
     DISABLE_BUFFER = 7
+    SET_PID_GAINS = 8
