@@ -271,24 +271,21 @@ public:
     if (!robot_enabled) {
       set_wheel_output(0.0, 0.0);
       pid_controllers.setpoints[ROTATION] = 0;
+      update_sensor_readings();
+      sensor_readings.gyro.z = 0;
       return;
     }
 
     update_sensor_readings();
     update_pid_controllers();
 
-    Serial.println(sensor_readings.tof.distA);  
-    Serial.println(sensor_readings.tof.distB);
-
-    Serial.println(pid_controllers.setpoints[ROTATION]);
-
-    if (pid_controllers.setpoints[ROTATION] == 0.0 && sensor_readings.tof.distA < 1000 && sensor_readings.tof.distB < 1000) {
+    if (pid_controllers.setpoints[ROTATION] == 0.0 && sensor_readings.tof.distA < 2000 && sensor_readings.tof.distB < 2000) {
       pid_controllers.setpoints[ROTATION] = 180;
     }
 
     double turn_val = pid_controllers.pid[ROTATION].output;
 
-    set_wheel_output(0.4 -turn_val, 0.4 + turn_val);
+    set_wheel_output(0.45 -turn_val, 0.45 + turn_val);
   }
 
   // 1.0 = full forward, -1.0 = full backwards
