@@ -2,11 +2,11 @@
 <html lang="en">
 
 <head>
-    <title>Lab 2 - Bluetooth Communication</title>
+    <title>Lab 2 - Bluetooth Communication | Michael Crum's Portfolio</title>
 
     <!-- seo -->
     <meta name="author" content="Michael Crum">
-    <meta name="description" content="Michael Crum's portfolio and blog website.">
+    <meta name="description" content="Page for lab two">
     <meta name="keywords" content="portfolio,developer,robotics,personal">
 
     <!-- display -->
@@ -19,88 +19,92 @@
 
     <!-- stylesheets -->
     <link rel="stylesheet" href="../styles/project_page.css">
+    <link href="../styles/themes/prism.css" rel="stylesheet" />
 
     <!-- font -->
     <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet" />
 </head>
 
 <body>
+    <script src="../styles/themes/prism.js"></script>
     <div id="left_pad"></div>
     <aside>
-        <h1><a href="..">ECE 4160:<br>Fast Robots</a></h1>
-        <h3><em>Labs:</em></h3>
+        <h1><a href="..">Fast Robots</a></h1>
+        <h3><em>Lab Reports:</em></h3>
         <nav>
             <ul>
-                <a href="../intro">
-    <li>
-        <img src="../intro/assets/snapshot.png">
+                <li>
+    <a href="../intro">
+        <img src="../intro/assets/snapshot.webp" alt="Introduction">
         <div>
             <p>Introduction</p>
             <em> 1.27.23</em>
         </div>
-    </li>
-</a>
-<br>
-<a href="../lab_1">
-    <li>
-        <img src="../lab_1/assets/snapshot.png">
+    </a>
+</li>
+<li>
+    <a href="../lab_1">
+        <img src="../lab_1/assets/snapshot.webp" alt="Lab 1 - Artemis">
         <div>
             <p>Lab 1 - Artemis</p>
             <em> 1.27.23</em>
         </div>
-    </li>
-</a>
-<br>
-<a href="../lab_2">
-    <li>
-        <img src="../lab_2/assets/snapshot.png">
+    </a>
+</li>
+<li>
+    <a href="../lab_2">
+        <img src="../lab_2/assets/snapshot.webp" alt="Lab 2 - Bluetooth Communication">
         <div>
             <p>Lab 2 - Bluetooth Communication</p>
             <em> 2.2.23</em>
         </div>
-    </li>
-</a>
-<br>
-<a href="../lab_3">
-    <li>
-        <img src="../lab_3/assets/snapshot.png">
+    </a>
+</li>
+<li>
+    <a href="../lab_3">
+        <img src="../lab_3/assets/snapshot.webp" alt="Lab 3 - Time Of Flight (ToF)">
         <div>
             <p>Lab 3 - Time Of Flight (ToF)</p>
             <em> 2.9.23</em>
         </div>
-    </li>
-</a>
-<br>
-<a href="../lab_4">
-    <li>
-        <img src="../lab_4/assets/snapshot.png">
+    </a>
+</li>
+<li>
+    <a href="../lab_4">
+        <img src="../lab_4/assets/snapshot.webp" alt="Lab 4 - IMU">
         <div>
             <p>Lab 4 - IMU</p>
             <em> 2.16.23</em>
         </div>
-    </li>
-</a>
-<br>
-<a href="../lab_5">
-    <li>
-        <img src="../lab_5/assets/snapshot.png">
+    </a>
+</li>
+<li>
+    <a href="../lab_5">
+        <img src="../lab_5/assets/snapshot.webp" alt="Lab 5 - Motors and Open Loop Control">
         <div>
             <p>Lab 5 - Motors and Open Loop Control</p>
             <em> 2.23.23</em>
         </div>
-    </li>
-</a>
-<br>
-<a href="../lab_6">
-    <li>
-        <img src="../lab_6/assets/snapshot.png">
+    </a>
+</li>
+<li>
+    <a href="../lab_6">
+        <img src="../lab_6/assets/snapshot.webp" alt="Lab 6 - PID Speed Control">
         <div>
             <p>Lab 6 - PID Speed Control</p>
             <em> 2.23.23</em>
         </div>
-    </li>
-</a>
-<br>
+    </a>
+</li>
+<li>
+    <a href="../lab_7">
+        <img src="../lab_7/assets/snapshot.webp" alt="Lab 7 - Kalman Filter">
+        <div>
+            <p>Lab 7 - Kalman Filter</p>
+            <em> 2.23.23</em>
+        </div>
+    </a>
+</li>
             </ul>
         </nav>
     </aside>
@@ -111,6 +115,7 @@
         <em class="date">
             2.2.23
         </em>
+        <br>
         <h2 id="introduction">Introduction</h2>
 <p>In this lab I established communication between my laptop and Artemis board using BLE.</p>
 <h2 id="prelab">Prelab</h2>
@@ -126,13 +131,13 @@
 <h2 id="labtasks">Lab Tasks</h2>
 <h3 id="configurations">Configurations</h3>
 <p>Each service and characteristic the Artemis advertises also needs a unique identifier for the laptop to query. To ensure I was the only one talking to my device, I generated a new UUID for each. The following code is from ble_arduino.ino:</p>
-<pre><code>#define BLE_UUID_TEST_SERVICE "f74736e0-f5ac-4541-959d-e6c1f1b3f55c"
+<pre><code class="c language-c">#define BLE_UUID_TEST_SERVICE "f74736e0-f5ac-4541-959d-e6c1f1b3f55c"
 #define BLE_UUID_RX_STRING "58482b00-4146-4122-be67-2d89016731a8"
 #define BLE_UUID_TX_FLOAT "51eed2ce-3329-4232-b8d5-8f022aaa2d1a"
 #define BLE_UUID_TX_STRING "aa71399e-0f1d-411d-ac23-7ace2936fd5e"
 </code></pre>
 <p>These UUID's match the ones stored in the python side's connection.yaml:</p>
-<pre><code>artemis_address: 'c0:83:0c:66:2f:3c'
+<pre><code class="js language-js">artemis_address: 'c0:83:0c:66:2f:3c'
 
 ble_service: 'f74736e0-f5ac-4541-959d-e6c1f1b3f55c'
 
@@ -145,12 +150,12 @@ characteristics:
 <p>Because I am running Linux, I also had to alter line 53 in base_ble.py, as outlined in the lab instructions.</p>
 <h3 id="runningdemoipynb">Running demo.ipynb</h3>
 <p>We were provided with a demo file to test our BLE connection. After switching to Ubuntu, I was able to run the full file with little difficulty, resulting in the following output:</p>
-<p><img src="./assets/demo_start_py.png" alt="The output from the Jupyter Notebook" /></p>
-<p><img src="./assets/demo_start_arduino.png" alt="And the accompanying arduino shell output" /></p>
+<p><img src="./assets/demo_start_py.webp" alt="The output from the Jupyter Notebook"></p>
+<p><img src="./assets/demo_start_arduino.webp" alt="And the accompanying arduino shell output"></p>
 <h3 id="sendinganechocommand">Sending an Echo Command</h3>
 <p>An Echo command returns the message that was sent to it. In this case, I augmented the message to show that the robot was responding. This required defining a new command, which must be coordinated between the Arduino and Python code.</p>
 <p>The Arduino code is as follows:</p>
-<pre><code>case ECHO:
+<pre><code class="cpp language-cpp">case ECHO:
 
     char char_arr[MAX_MSG_SIZE];
 
@@ -168,11 +173,11 @@ characteristics:
     break;
 </code></pre>
 <p>The final output was:</p>
-<p><img src="./assets/echo.png" alt="The output from the Echo command" /></p>
+<p><img src="./assets/echo.webp" alt="The output from the Echo command"></p>
 <h3 id="creatingagettimecommand">Creating a Get Time Command</h3>
 <p>The get time command was similar to the echo command, but also including a float.</p>
 <p>The Arduino code:</p>
-<pre><code>case GET_TIME_MILLIS:
+<pre><code class="cpp language-cpp">case GET_TIME_MILLIS:
     tx_estring_value.clear();
     tx_estring_value.append("T:");
     tx_estring_value.append((float)millis());
@@ -180,13 +185,13 @@ characteristics:
     break;
 </code></pre>
 <p>The Python code and output:</p>
-<p><img src="./assets/get_time_millis.png" alt="The python code / output for get time" /></p>
+<p><img src="./assets/get_time_millis.webp" alt="The python code / output for get time"></p>
 <h3 id="makinganotificationhandler">Making a Notification Handler</h3>
 <p>We often don't know when a message will be posted, but want to be alerted when it does. Bleak call these events notifications, and provides a method to register a handler function. Below is the Python code for implementing one, which extracts the timestamp from a message.</p>
-<p><img src="./assets/handler_test.png" alt="The python notifier" /></p>
+<p><img src="./assets/handler_test.webp" alt="The python notifier"></p>
 <h3 id="writingthegettemperaturecommand">Writing the Get Temperature Command</h3>
 <p>The Artemis includes a temperature sensor and methods to access its data, so getting the temperature was similar to getting the time. In order to time the successive reads I used a delay. Below is the relevant code:</p>
-<pre><code>case GET_TEMP_5S:
+<pre><code class="cpp language-cpp">case GET_TEMP_5S:
     for(int i = 0; i &lt; 5; i++){
         unsigned long start = millis();
         tx_estring_value.clear();
@@ -204,10 +209,10 @@ characteristics:
     break;
 </code></pre>
 <p>And Python output</p>
-<p><img src="./assets/temp_5s_test.png" alt="The Python output of the Get Temperature Command" /></p>
+<p><img src="./assets/temp_5s_test.webp" alt="The Python output of the Get Temperature Command"></p>
 <p>I also wrote a command that attempts to sample and relay data at 20Hz, which is shown below:</p>
 <p>Arduino code:</p>
-<pre><code>case GET_TEMP_5S_RAPID:
+<pre><code class="cpp language-cpp">case GET_TEMP_5S_RAPID:
     for(int i = 0; i &lt; 20*5; i++){
         unsigned long start = millis();
         tx_estring_value.clear();
@@ -225,7 +230,7 @@ characteristics:
     break;
 </code></pre>
 <p>Python code / output:</p>
-<p><img src="./assets/temp_rapid.png" alt="The python output for rapid temperature sensing" /></p>
+<p><img src="./assets/temp_rapid.webp" alt="The python output for rapid temperature sensing"></p>
 <p>The output is clipped, but continues for 100 readings over 5 seconds.</p>
 <h3 id="limitations">Limitations</h3>
 <p>Dealing with the BLE overhead as well as constructing string messages takes a huge number of processor cycles. In some high speed applications this is unacceptable, and real time data relaying is not possible. In these cases, we need to store data and relay it at some other time.</p>

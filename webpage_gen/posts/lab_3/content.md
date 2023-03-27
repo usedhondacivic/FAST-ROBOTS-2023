@@ -54,7 +54,7 @@ To use two sensors with the same I2C address, I toggle the enable pin on one whi
 
 Arduino code:
 
-```
+```cpp
 distanceSensorB.sensorOff();
     if (distanceSensorA.begin() != 0) //Begin returns 0 on a good init
     {
@@ -92,7 +92,7 @@ distanceSensorB.sensorOff();
 
 When readings were taken from both sensors at maximum speed, I observed delays of between 80 and 110 ms. I took these readings using the following Arduino code:
 
-```
+```cpp
 while(1){
     long int reading_start = millis();
     distanceSensorA.startRanging(); //Write configuration bytes to initiate measurement
@@ -133,7 +133,7 @@ I previously measured a ranging delay of around 97 ms from the sensor. This take
 Due to other overhead caused by Bluetooth communication, real-time data relaying is not practical. Instead, I store data onboard the Artemis and relay it at a later time. Below is the code to achieve this effect:
 
 Arduino:
-```
+```cpp
 case GET_TOF_DATA_5S: {
             int tof_readings[25][3];
             for(int i = 0; i < 25; i++){

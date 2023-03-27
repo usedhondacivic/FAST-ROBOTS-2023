@@ -3,8 +3,23 @@ const path = require('path');
 const fsExtra = require('fs-extra');
 const glob = require("glob");
 const sharp = require("sharp");
+var showdownKatex = require("showdown-katex");
 var showdown = require('showdown'),
-    converter = new showdown.Converter();
+    converter = new showdown.Converter({
+        extensions: [
+            showdownKatex({
+                displayMode: true,
+                throwOnError: true,
+                errorColor: '#ff0000',
+                delimiters: [
+                    { left: "$", right: "$", display: false },
+                    { left: "$$", right: "$$", display: true },
+                    { left: '~', right: '~', display: false, asciimath: true },
+                ],
+            }),
+        ],
+    });
+
 
 // Grab the templates
 const index_template = fs.readFileSync(path.resolve(__dirname, 'templates/index.html'), 'utf8');
@@ -23,7 +38,7 @@ var info_arr = [];
 var sidebar = [];
 var homepage_entries = [];
 
-// Copy a folder of images, and downsize them to reduce loading times.
+// Copy a folder of images, and convert them to WebP to reduce loading time
 function resize_and_relocate(src_dir, target_dir) {
     fs.mkdirSync(target_dir, { recursive: true });
     glob(src_dir + "/**", function (er, files) {
@@ -31,13 +46,7 @@ function resize_and_relocate(src_dir, target_dir) {
             let file_split = path_name.split("/");
             let file_name = file_split[file_split.length - 1];
             if (file_name == "assets") return;
-            sharp(path_name)
-                .resize({
-                    width: 900,
-                    height: 600,
-                    fit: sharp.fit.inside
-                })
-                .toFile(target_dir + "/" + file_name)
+            sharp(path_name).toFile(target_dir + "/" + file_name.split(".")[0] + ".webp");
         })
     })
 }
@@ -48,16 +57,18 @@ glob("posts/*/*.md", function (er, files) {
         var info = JSON.parse(fs.readFileSync(path.resolve(__dirname, path_name.replace("content.md", "info.json"))));
         // Populate the content of a project page
         var contents_md = fs.readFileSync(path.resolve(__dirname, path_name), 'utf8');
+        contents_md = contents_md.replaceAll(".png", ".webp").replaceAll(".jpg", ".webp").replaceAll(".jpeg", ".webp");
         var contents_html = converter.makeHtml(contents_md);
         var contents_page = content_template.replaceAll("<!-- TITLE -->", info.title)
             .replace("<!-- CONTENT -->", contents_html)
-            .replace("<!-- DATE -->", info.date);
+            .replace("<!-- DATE -->", info.date)
+            .replace("<!-- DESCRIPTION -->", info.description);
         var new_path = path_name.replace("posts", "../docs").replace("/content.md", "");
         pages[new_path] = contents_page;
         // Copy assets
         resize_and_relocate(path_name.replace("/content.md", "/assets"), new_path + '/assets');
         info.rel_post_link = new_path.replace("../docs", "");
-        info.rel_snapshot_link = new_path.replace("../docs", "") + "/assets/snapshot.png";
+        info.rel_snapshot_link = new_path.replace("../docs", "") + "/assets/snapshot.webp";
         info_arr.push(info);
     })
     info_arr.sort(function (a, b) {
@@ -65,7 +76,7 @@ glob("posts/*/*.md", function (er, files) {
     })
     info_arr.forEach(info => {
         // Create sidebar entry
-        var sidebar_entry = sidebar_entry_template.replace("<!-- TITLE -->", info.title)
+        var sidebar_entry = sidebar_entry_template.replaceAll("<!-- TITLE -->", info.title)
             .replace("<!-- DATE -->", info.date)
             .replaceAll("project_link", ".." + info.rel_post_link)
             .replace("snapshot_link", ".." + info.rel_snapshot_link);
@@ -91,4 +102,6 @@ glob("posts/*/*.md", function (er, files) {
     fs.writeFileSync(path.resolve(__dirname, "../docs/index.html"), content);
     // Write global assets to the docs folder
     fsExtra.copySync(path.resolve(__dirname, "global_assets"), path.resolve(__dirname, "../docs/global_assets"));
+    // Write CNAME to the docs folder
+    fs.writeFileSync(path.resolve(__dirname, "../docs/CNAME"), "michael-crum.com");
 })

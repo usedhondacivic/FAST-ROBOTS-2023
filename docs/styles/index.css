@@ -50,6 +50,7 @@ section#card article img {
 }
 
 section#card aside h1 {
+    font-family: 'Pacifico', cursive;
     font-size: 30px;
     margin: 35px 0px 0px 0px;
 }
@@ -124,6 +125,7 @@ header {
 }
 
 header h2 {
+    font-family: 'Pacifico', cursive;
     font-size: 30px;
     margin-bottom: 0px;
 }

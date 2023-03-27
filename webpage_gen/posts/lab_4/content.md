@@ -26,7 +26,7 @@ The IMU example code includes the line `#define AD0_VAL 1`, which sets the last 
 
 Using the data from the accelerometer, we can calculate the pitch and roll of the sensor. I used the following equations:
 
-```
+```cpp
 float roll= atan2(sensor_readings.accel.y, sensor_readings.accel.z) * (180.0 / 3.14);
 float pitch = atan2(sensor_readings.accel.x, sensor_readings.accel.z) * (180.0 / 3.14);
 ```
@@ -73,7 +73,7 @@ To get the best of both sensors, we can combine their signals using a complement
 
 ![A graph of the complementary filter](./assets/complementary.png)
 
-```
+```cpp
 float gyro_favor = 0.98;
 pose.rot.x = (gyro_favor) * (pose.rot.x + myICM.gyrX() * dt) + (1.00 - gyro_favor) * (roll);
 pose.rot.y = (gyro_favor) * (pose.rot.y - myICM.gyrY() * dt) + (1.00 - gyro_favor) * (pitch);
@@ -95,7 +95,7 @@ I then setup a system to store all of my data in buffers. By storing the data lo
 
 I did so using a struct holding relevant linked lists and a set of enable flags. 
 
-```
+```cpp
 enum  BUFFER_TYPE {ACCEL, GYRO, MAG, TOF, POSE, NA};
 struct {
     LinkedList<THREE_AXIS> accel;
@@ -113,7 +113,7 @@ Each of these buffers can be enabled and disabled separately. By using a differe
 
 On the Python side, I can send a command to enable, disable, and read a buffer. A full cycle looks like:
 
-```
+```cpp
 ble.send_command(CMD.ENABLE_BUFFER, "ACCEL")
 time.sleep(10) # Wait for measurements
 ble.send_command(CMD.DISABLE_BUFFER, "ACCEL")

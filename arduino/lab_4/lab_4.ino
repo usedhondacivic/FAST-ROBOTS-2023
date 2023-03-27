@@ -283,13 +283,21 @@ public:
       pid_controllers.setpoints[ROTATION] = 180;
     }
 
-    double turn_val = pid_controllers.pid[ROTATION].output;
-
-    set_wheel_output(0.45 -turn_val, 0.45 + turn_val);
+    //double turn_val = pid_controllers.pid[ROTATION].output;
+    //set_wheel_output(0.45 - turn_val, 0.45 + turn_val);
+    if(sensor_readings.tof.distA > 500 && sensor_readings.tof.distB > 500)
+      set_wheel_output(0.60, 0.45);
+    else
+      set_wheel_output(0, 0, true); // brake
+      
+  }
+  
+  void set_wheel_output(double left, double right){
+    set_wheel_output(left, right, false);
   }
 
   // 1.0 = full forward, -1.0 = full backwards
-  void set_wheel_output(double left, double right) {
+  void set_wheel_output(double left, double right, bool brake) {
     int deadband = 20;
     int remaining_band = 255 - deadband;
     int left_sign = left / abs(left);
@@ -301,11 +309,19 @@ public:
     if (left == 0.0) output_left = 0.0;
     if (right == 0.0) output_right = 0.0;
 
-    analogWrite(13, max(output_left, 0));
-    analogWrite(14, -min(output_left, 0));
+    if(brake){
+      analogWrite(13, 1);
+      analogWrite(14, 1);
 
-    analogWrite(15, -min(output_right, 0));
-    analogWrite(12, max(output_right, 0));
+      analogWrite(15, 1);
+      analogWrite(12, 1);
+    }else{
+      analogWrite(13, max(output_left, 0));
+      analogWrite(14, -min(output_left, 0));
+
+      analogWrite(15, -min(output_right, 0));
+      analogWrite(12, max(output_right, 0));
+    }
 
     THREE_AXIS motor_speed;
     motor_speed.x = output_left;

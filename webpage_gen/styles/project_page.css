@@ -17,11 +17,13 @@ body {
 
 aside {
     min-width: 280px;
-    max-width: 280px;
+    max-width: 350px;
     text-align: right;
 }
 
 aside h1 {
+    font-family: 'Pacifico',
+        cursive;
     font-size: 27px;
     margin-bottom: 0px;
 }
@@ -44,6 +46,10 @@ nav {
 nav a {
     text-decoration: none;
     color: #fefff5;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: right;
 }
 
 nav ul {
@@ -54,7 +60,6 @@ nav ul {
 nav li {
     display: flex;
     margin-bottom: 20px;
-    float: right;
     align-items: center;
 }
 
@@ -81,6 +86,7 @@ nav img {
     aspect-ratio: 1/1;
     object-fit: cover;
     order: 1;
+    float: right;
 }
 
 article {
@@ -89,6 +95,8 @@ article {
     max-width: 900px;
     min-width: 600px;
     width: 100%;
+    overflow-wrap: anywhere;
+    flex-shrink: 0.2;
 }
 
 article img {
@@ -117,6 +125,12 @@ article a {
     color: aqua;
 }
 
+article iframe {
+    width: 100%;
+    aspect-ratio: 9/5;
+    border: none;
+}
+
 pre {
     white-space: pre-wrap;
     /* Since CSS 2.1 */
@@ -131,25 +145,21 @@ pre {
 }
 
 #right_pad {
-    max-width: 200px;
+    max-width: 50%;
     min-width: 50px;
     width: 100%;
-
+    flex-shrink: 100;
 }
 
 #left_pad {
-    max-width: 200px;
+    max-width: 50%;
     min-width: 50px;
     width: 100%;
+    flex-shrink: 100;
 }
 
-code {}
-
-pre {
-    background-color: #141414;
-    display: block;
-    padding: 15px;
-    border-radius: 5px;
+.katex-html {
+    display: none;
 }
 
 @media only screen and (max-width: 1000px) {
@@ -175,6 +185,12 @@ pre {
     nav li {
         flex-direction: column;
         float: none;
+        margin-bottom: 40px;
+    }
+
+    nav a {
+        flex-direction: column;
+        float: none;
     }
 
     nav img {
@@ -184,5 +200,18 @@ pre {
         margin-bottom: 10px;
         width: 100px;
         height: 100px;
+    }
+}
+
+@media only screen and (max-width: 500px) {
+    body {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+        padding-top: 10px !important;
+        margin: 5px !important;
+    }
+
+    h1 {
+        margin-top: 15px !important;
     }
 }

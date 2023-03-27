@@ -2,11 +2,11 @@
 <html lang="en">
 
 <head>
-    <title>Lab 4 - IMU</title>
+    <title>Lab 4 - IMU | Michael Crum's Portfolio</title>
 
     <!-- seo -->
     <meta name="author" content="Michael Crum">
-    <meta name="description" content="Michael Crum's portfolio and blog website.">
+    <meta name="description" content="Page for lab four">
     <meta name="keywords" content="portfolio,developer,robotics,personal">
 
     <!-- display -->
@@ -19,88 +19,92 @@
 
     <!-- stylesheets -->
     <link rel="stylesheet" href="../styles/project_page.css">
+    <link href="../styles/themes/prism.css" rel="stylesheet" />
 
     <!-- font -->
     <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet" />
 </head>
 
 <body>
+    <script src="../styles/themes/prism.js"></script>
     <div id="left_pad"></div>
     <aside>
-        <h1><a href="..">ECE 4160:<br>Fast Robots</a></h1>
-        <h3><em>Labs:</em></h3>
+        <h1><a href="..">Fast Robots</a></h1>
+        <h3><em>Lab Reports:</em></h3>
         <nav>
             <ul>
-                <a href="../intro">
-    <li>
-        <img src="../intro/assets/snapshot.png">
+                <li>
+    <a href="../intro">
+        <img src="../intro/assets/snapshot.webp" alt="Introduction">
         <div>
             <p>Introduction</p>
             <em> 1.27.23</em>
         </div>
-    </li>
-</a>
-<br>
-<a href="../lab_1">
-    <li>
-        <img src="../lab_1/assets/snapshot.png">
+    </a>
+</li>
+<li>
+    <a href="../lab_1">
+        <img src="../lab_1/assets/snapshot.webp" alt="Lab 1 - Artemis">
         <div>
             <p>Lab 1 - Artemis</p>
             <em> 1.27.23</em>
         </div>
-    </li>
-</a>
-<br>
-<a href="../lab_2">
-    <li>
-        <img src="../lab_2/assets/snapshot.png">
+    </a>
+</li>
+<li>
+    <a href="../lab_2">
+        <img src="../lab_2/assets/snapshot.webp" alt="Lab 2 - Bluetooth Communication">
         <div>
             <p>Lab 2 - Bluetooth Communication</p>
             <em> 2.2.23</em>
         </div>
-    </li>
-</a>
-<br>
-<a href="../lab_3">
-    <li>
-        <img src="../lab_3/assets/snapshot.png">
+    </a>
+</li>
+<li>
+    <a href="../lab_3">
+        <img src="../lab_3/assets/snapshot.webp" alt="Lab 3 - Time Of Flight (ToF)">
         <div>
             <p>Lab 3 - Time Of Flight (ToF)</p>
             <em> 2.9.23</em>
         </div>
-    </li>
-</a>
-<br>
-<a href="../lab_4">
-    <li>
-        <img src="../lab_4/assets/snapshot.png">
+    </a>
+</li>
+<li>
+    <a href="../lab_4">
+        <img src="../lab_4/assets/snapshot.webp" alt="Lab 4 - IMU">
         <div>
             <p>Lab 4 - IMU</p>
             <em> 2.16.23</em>
         </div>
-    </li>
-</a>
-<br>
-<a href="../lab_5">
-    <li>
-        <img src="../lab_5/assets/snapshot.png">
+    </a>
+</li>
+<li>
+    <a href="../lab_5">
+        <img src="../lab_5/assets/snapshot.webp" alt="Lab 5 - Motors and Open Loop Control">
         <div>
             <p>Lab 5 - Motors and Open Loop Control</p>
             <em> 2.23.23</em>
         </div>
-    </li>
-</a>
-<br>
-<a href="../lab_6">
-    <li>
-        <img src="../lab_6/assets/snapshot.png">
+    </a>
+</li>
+<li>
+    <a href="../lab_6">
+        <img src="../lab_6/assets/snapshot.webp" alt="Lab 6 - PID Speed Control">
         <div>
             <p>Lab 6 - PID Speed Control</p>
             <em> 2.23.23</em>
         </div>
-    </li>
-</a>
-<br>
+    </a>
+</li>
+<li>
+    <a href="../lab_7">
+        <img src="../lab_7/assets/snapshot.webp" alt="Lab 7 - Kalman Filter">
+        <div>
+            <p>Lab 7 - Kalman Filter</p>
+            <em> 2.23.23</em>
+        </div>
+    </a>
+</li>
             </ul>
         </nav>
     </aside>
@@ -111,6 +115,7 @@
         <em class="date">
             2.16.23
         </em>
+        <br>
         <h2 id="introduction">Introduction</h2>
 <p>In this lab we setup and benchmarked a SparkFun breakout board for the ICM 20948 9DOF IMU. This device includes a gyroscope, accelerometer, and magnetometer. By fusing the sensor readings in code we can generate pose estimates for the robot's rotation.</p>
 <h2 id="setuptheimu">Setup the IMU</h2>
@@ -120,66 +125,66 @@
   <p>The wiring of the IMU, Artemis, and TOF sensors</p>
 </blockquote>
 <p>I used the program <a href="https://hackaday.io/project/181686-better-serial-plotter">BetterSerialPlotter</a> to plot some data from the accelerometer and gyroscope to ensure the IMU was functioning.</p>
-<p><img src="./assets/gyro_plot.png" alt="Gyroscope data" /></p>
+<p><img src="./assets/gyro_plot.webp" alt="Gyroscope data"></p>
 <blockquote>
   <p>The gyroscope data</p>
 </blockquote>
-<p><img src="./assets/accel_plot.png" alt="Accelerometer data" /></p>
+<p><img src="./assets/accel_plot.webp" alt="Accelerometer data"></p>
 <blockquote>
   <p>The accelerometer data</p>
 </blockquote>
 <p>The IMU example code includes the line <code>#define AD0_VAL 1</code>, which sets the last bit of the sensor I2C address. This allows for multiple ICM 20948's to be used on the same I2C bus. Our IMU uses the default address, so I left the value at 1.</p>
 <h2 id="accelerometer">Accelerometer</h2>
 <p>Using the data from the accelerometer, we can calculate the pitch and roll of the sensor. I used the following equations:</p>
-<pre><code>float roll= atan2(sensor_readings.accel.y, sensor_readings.accel.z) * (180.0 / 3.14);
+<pre><code class="cpp language-cpp">float roll= atan2(sensor_readings.accel.y, sensor_readings.accel.z) * (180.0 / 3.14);
 float pitch = atan2(sensor_readings.accel.x, sensor_readings.accel.z) * (180.0 / 3.14);
 </code></pre>
 <p>I then plotted the output:</p>
-<p><img src="./assets/pitch_roll_graph.png" alt="Pitch and roll calculated from the acceleration" /></p>
+<p><img src="./assets/pitch_roll_graph.webp" alt="Pitch and roll calculated from the acceleration"></p>
 <blockquote>
   <p>Pitch and roll calculated from the acceleration</p>
 </blockquote>
 <p>I also plotted the roll going between +/- 90 degrees. When at 90 degrees, the acceleration in Z is close to 0. Looking at the equations for pitch on roll, we can see why this becomes an issue. 
 <code>accel.z</code> is in the denominator of the calculation, and noise begins controlling the system as the value approaches 0.
 This results in the noise shown on the top and bottom edges.</p>
-<p><img src="./assets/roll_flip_plot.png" alt="Roll at +/- 90 deg" /></p>
+<p><img src="./assets/roll_flip_plot.webp" alt="Roll at +/- 90 deg"></p>
 <blockquote>
   <p>Roll measured at +/- 90 degrees</p>
 </blockquote>
 <p>Finally, I measured the precision of the calculated roll by plotting the output while the sensor was completely still. The values varied by 10 degrees.</p>
-<p><img src="./assets/roll_acc_plot.png" alt="Roll when the sensor was stationary" /></p>
+<p><img src="./assets/roll_acc_plot.webp" alt="Roll when the sensor was stationary"></p>
 <blockquote>
   <p>Roll when the sensor was stationary</p>
 </blockquote>
 <p>To improve performance and lower the effect of noise, a low pass filter is often applied to accelerometer readings. To see how much noise was impacting my sensor I applied a fourier transform to accelerometer data collected while the sensor was sitting still.</p>
 <p>This resulted in the following graphs:</p>
-<p><img src="./assets/freq_x.png" alt="Frequency graph for X" />
-<img src="./assets/freq_y.png" alt="Frequency graph for Y" />
-<img src="./assets/freq_z.png" alt="Frequency graph for Z" /></p>
+<p><img src="./assets/freq_x.webp" alt="Frequency graph for X">
+<img src="./assets/freq_y.webp" alt="Frequency graph for Y">
+<img src="./assets/freq_z.webp" alt="Frequency graph for Z"></p>
 <p>As you can see, there is no noticeable bias towards high frequency noise in the system. This is likely because the sensor has an internal low pass that is enabled automatically on my unit. This is referenced on page 10 of <a href="https://invensense.tdk.com/wp-content/uploads/2016/06/DS-000189-ICM-20948-v1.3.pdf">the data sheet</a>.</p>
 <h2 id="gyroscope">Gyroscope</h2>
 <p>Next I started incorporating the gyroscope. As seen below, the gyroscope offers a less noisy signal than the accelerometer, with the caveat of drift over time. This can be seen in the graph below, which show the gyroscope reported roll in purple and the accelerometer calculated roll in red.</p>
-<p><img src="./assets/accel_vs_gyro.png" alt="A graph of accelerometer vs gyroscope data" /></p>
+<p><img src="./assets/accel_vs_gyro.webp" alt="A graph of accelerometer vs gyroscope data"></p>
 <blockquote>
   <p>A graph of accelerometer vs gyroscope data</p>
 </blockquote>
 <p>To get the best of both sensors, we can combine their signals using a complementary filter. This filter acts as a high-pass filter on gyroscope and a low-pass filter on the accelerometer, then combines the two. This gives the accelerometers reliability with the gyroscopes rejection of noise. Below is a plot of the filter, along with the code I used to implement it.</p>
-<p><img src="./assets/complementary.png" alt="A graph of the complementary filter" /></p>
-<pre><code>float gyro_favor = 0.98;
+<p><img src="./assets/complementary.webp" alt="A graph of the complementary filter"></p>
+<pre><code class="cpp language-cpp">float gyro_favor = 0.98;
 pose.rot.x = (gyro_favor) * (pose.rot.x + myICM.gyrX() * dt) + (1.00 - gyro_favor) * (roll);
 pose.rot.y = (gyro_favor) * (pose.rot.y - myICM.gyrY() * dt) + (1.00 - gyro_favor) * (pitch);
 </code></pre>
 <p>I hand tuned the gyro_favor factor to get the desired response. Overall I was very happy with the performance of the filter, given how simple it was to implement. As shown in the graph, the complementary output has the smoothness of the gyroscope output, yet remains inline with the average of the accelerometer data.</p>
 <h2 id="sampledata">Sample Data</h2>
 <p>To test the speed I am able to sample the IMU, I removed all print statements and wrote a loop that would take as many measurements as possible in one second.</p>
-<p><img src="./assets/data_speed.png" alt="The measured data speed" /></p>
+<p><img src="./assets/data_speed.webp" alt="The measured data speed"></p>
 <blockquote>
   <p>The measured data speed</p>
 </blockquote>
 <p>This resulted in 138 samples per second.</p>
 <p>I then setup a system to store all of my data in buffers. By storing the data locally I can have the car execute a trick and send it after it's done.</p>
 <p>I did so using a struct holding relevant linked lists and a set of enable flags. </p>
-<pre><code>enum  BUFFER_TYPE {ACCEL, GYRO, MAG, TOF, POSE, NA};
+<pre><code class="cpp language-cpp">enum  BUFFER_TYPE {ACCEL, GYRO, MAG, TOF, POSE, NA};
 struct {
     LinkedList&lt;THREE_AXIS&gt; accel;
     LinkedList&lt;THREE_AXIS&gt; gyro;
@@ -193,7 +198,7 @@ struct {
 </code></pre>
 <p>Each of these buffers can be enabled and disabled separately. By using a different buffer for each type of data, I can only store the data I need. On a memory limited system like the Artemis, this means we can take many more measurements before sending them to the laptop.</p>
 <p>On the Python side, I can send a command to enable, disable, and read a buffer. A full cycle looks like:</p>
-<pre><code>ble.send_command(CMD.ENABLE_BUFFER, "ACCEL")
+<pre><code class="cpp language-cpp">ble.send_command(CMD.ENABLE_BUFFER, "ACCEL")
 time.sleep(10) # Wait for measurements
 ble.send_command(CMD.DISABLE_BUFFER, "ACCEL")
 ble.start_notify(ble.uuid['RX_STRING'], ble_msg_handler)
@@ -205,17 +210,17 @@ ble.send_command(CMD.RETRIEVE_BUFFER, "POSE")
 <p>We have two LiPo batteries available for our car. One is 650mAh and the other is 800mAh. I am using a separate battery for the MCU and the motors to reduce the electromagnetic interference between the motors and sensors. </p>
 <p>Because the Artemis draws practically no power, I am reserving the larger battery for use with the motors. This will make the car run for longer.</p>
 <p>To confirm the Artemis can tetherless I attached it to the car with the sensors and battery.</p>
-<p><img src="./assets/car_front.png" alt="The car" />
-<img src="./assets/car_top.png" alt="The car" /></p>
+<p><img src="./assets/car_front.webp" alt="The car">
+<img src="./assets/car_top.webp" alt="The car"></p>
 <blockquote>
   <p>The car with the Artemis, sensors, and battery attached.</p>
 </blockquote>
 <h2 id="recordastunt">Record a Stunt</h2>
 <p>Below is a video of the car in motion and the corresponding sensor readings transmitted over BLE.</p>
-<iframe width="510" height="906" src="https://www.youtube.com/embed/D18eJpVxy1Q" title="ECE 4160: Car demo" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
-<p><img src="./assets/pose_graph.png" alt="Graph of Pose" /></p>
-<p><img src="./assets/accel_graph.png" alt="Graph of Accel" /></p>
-<p><img src="./assets/tof_graph" alt="Graph of TOF readings" /></p>
+<iframe width="510" height="906" src="https://www.youtube.com/embed/D18eJpVxy1Q" title="ECE 4160: Car demo" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen=""></iframe>
+<p><img src="./assets/pose_graph.webp" alt="Graph of Pose"></p>
+<p><img src="./assets/accel_graph.webp" alt="Graph of Accel"></p>
+<p><img src="./assets/tof_graph" alt="Graph of TOF readings"></p>
 <p>Notably, the acceleration data is exceptionally noisy. This is due to my IMU placement. While taping the sensors to the car, I placed the IMU directly above the car's two motors. DC motors create a huge about of electromagnetic interference, and caused large spikes in the data. Luckily, the complementary filter did a great job of handling the situation, as seen in the pose graph. The two TOF sensors were facing the same direction on the front of the car, so it makes sense that their readings would be correlated. It seems like there might be a calibration issue however, as the readings are significantly offset.</p>
     </article>
     <div id="right_pad"></div>

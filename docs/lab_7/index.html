@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Lab 7 - Kalman Filter | Michael Crum's Portfolio</title>
+
+    <!-- seo -->
+    <meta name="author" content="Michael Crum">
+    <meta name="description" content="Page for lab seven">
+    <meta name="keywords" content="portfolio,developer,robotics,personal">
+
+    <!-- display -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- icon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="../global_assets/icons/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="../global_assets/icons/favicon-16x16.png" />
+
+    <!-- stylesheets -->
+    <link rel="stylesheet" href="../styles/project_page.css">
+    <link href="../styles/themes/prism.css" rel="stylesheet" />
+
+    <!-- font -->
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet" />
+</head>
+
+<body>
+    <script src="../styles/themes/prism.js"></script>
+    <div id="left_pad"></div>
+    <aside>
+        <h1><a href="..">Fast Robots</a></h1>
+        <h3><em>Lab Reports:</em></h3>
+        <nav>
+            <ul>
+                <li>
+    <a href="../intro">
+        <img src="../intro/assets/snapshot.webp" alt="Introduction">
+        <div>
+            <p>Introduction</p>
+            <em> 1.27.23</em>
+        </div>
+    </a>
+</li>
+<li>
+    <a href="../lab_1">
+        <img src="../lab_1/assets/snapshot.webp" alt="Lab 1 - Artemis">
+        <div>
+            <p>Lab 1 - Artemis</p>
+            <em> 1.27.23</em>
+        </div>
+    </a>
+</li>
+<li>
+    <a href="../lab_2">
+        <img src="../lab_2/assets/snapshot.webp" alt="Lab 2 - Bluetooth Communication">
+        <div>
+            <p>Lab 2 - Bluetooth Communication</p>
+            <em> 2.2.23</em>
+        </div>
+    </a>
+</li>
+<li>
+    <a href="../lab_3">
+        <img src="../lab_3/assets/snapshot.webp" alt="Lab 3 - Time Of Flight (ToF)">
+        <div>
+            <p>Lab 3 - Time Of Flight (ToF)</p>
+            <em> 2.9.23</em>
+        </div>
+    </a>
+</li>
+<li>
+    <a href="../lab_4">
+        <img src="../lab_4/assets/snapshot.webp" alt="Lab 4 - IMU">
+        <div>
+            <p>Lab 4 - IMU</p>
+            <em> 2.16.23</em>
+        </div>
+    </a>
+</li>
+<li>
+    <a href="../lab_5">
+        <img src="../lab_5/assets/snapshot.webp" alt="Lab 5 - Motors and Open Loop Control">
+        <div>
+            <p>Lab 5 - Motors and Open Loop Control</p>
+            <em> 2.23.23</em>
+        </div>
+    </a>
+</li>
+<li>
+    <a href="../lab_6">
+        <img src="../lab_6/assets/snapshot.webp" alt="Lab 6 - PID Speed Control">
+        <div>
+            <p>Lab 6 - PID Speed Control</p>
+            <em> 2.23.23</em>
+        </div>
+    </a>
+</li>
+<li>
+    <a href="../lab_7">
+        <img src="../lab_7/assets/snapshot.webp" alt="Lab 7 - Kalman Filter">
+        <div>
+            <p>Lab 7 - Kalman Filter</p>
+            <em> 2.23.23</em>
+        </div>
+    </a>
+</li>
+            </ul>
+        </nav>
+    </aside>
+    <article id="article">
+        <h1>
+            Lab 7 - Kalman Filter
+        </h1>
+        <em class="date">
+            2.23.23
+        </em>
+        <br>
+        <h2 id="introduction">Introduction</h2>
+<p>A key issue with the car up to this point is the speed of the control loop. The loop is limited by when it receives new data, which is the sample time of the TOF sensor. Because TOF sensors need multiple sames to get an accurate result, the sample time is around 150 ms, or 6.66 Hz. A good control loop aims to be in the kHz, so we have a problem. A Kalman filter is one way of attacking this problem.</p>
+<p>The Kalman filter uses a model of the robots dynamics, its control inputs (what the program tells the robot to do), and estimations of the error in the system to generate a probability distribution over the location of the robot. That is to say, it predicts what the robot will do and gives a measure of its certainty. We can use this model to predict our TOF measurements even when we don't have a new measurements. This allows us to speed up the control loop by orders of magnitude.</p>
+<h2 id="establishingamodel">Establishing a Model</h2>
+<p>To use the Kalman filter we first need a model of the dynamics of the robot. Specifically, we want to know how the sensor readings will react to a robot driving straight at a wall.</p>
+<h2 id="testingonolddata">Testing on Old Data</h2>
+<h2 id="implementingontheartemis">Implementing on the Artemis</h2>
+<h2 id="results">Results</h2>
+    </article>
+    <div id="right_pad"></div>
+</body>
+
+</html>

@@ -29,7 +29,7 @@ The Python side uses the Bleak package to establish a BLE central device. These 
 
 Each service and characteristic the Artemis advertises also needs a unique identifier for the laptop to query. To ensure I was the only one talking to my device, I generated a new UUID for each. The following code is from ble_arduino.ino:
 
-```
+```c
 #define BLE_UUID_TEST_SERVICE "f74736e0-f5ac-4541-959d-e6c1f1b3f55c"
 #define BLE_UUID_RX_STRING "58482b00-4146-4122-be67-2d89016731a8"
 #define BLE_UUID_TX_FLOAT "51eed2ce-3329-4232-b8d5-8f022aaa2d1a"
@@ -38,7 +38,7 @@ Each service and characteristic the Artemis advertises also needs a unique ident
 
 These UUID's match the ones stored in the python side's connection.yaml:
 
-```
+```js
 artemis_address: 'c0:83:0c:66:2f:3c'
 
 ble_service: 'f74736e0-f5ac-4541-959d-e6c1f1b3f55c'
@@ -65,7 +65,7 @@ We were provided with a demo file to test our BLE connection. After switching to
 An Echo command returns the message that was sent to it. In this case, I augmented the message to show that the robot was responding. This required defining a new command, which must be coordinated between the Arduino and Python code.
 
 The Arduino code is as follows:
-``` 
+```cpp
 case ECHO:
 
     char char_arr[MAX_MSG_SIZE];
@@ -93,7 +93,7 @@ The final output was:
 The get time command was similar to the echo command, but also including a float.
 
 The Arduino code:
-```
+```cpp
 case GET_TIME_MILLIS:
     tx_estring_value.clear();
     tx_estring_value.append("T:");
@@ -116,7 +116,7 @@ We often don't know when a message will be posted, but want to be alerted when i
 
 The Artemis includes a temperature sensor and methods to access its data, so getting the temperature was similar to getting the time. In order to time the successive reads I used a delay. Below is the relevant code:
 
-```
+```cpp
 case GET_TEMP_5S:
     for(int i = 0; i < 5; i++){
         unsigned long start = millis();
@@ -142,7 +142,7 @@ And Python output
 I also wrote a command that attempts to sample and relay data at 20Hz, which is shown below:
 
 Arduino code:
-```
+```cpp
 case GET_TEMP_5S_RAPID:
     for(int i = 0; i < 20*5; i++){
         unsigned long start = millis();

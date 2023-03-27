@@ -2,11 +2,11 @@
 <html lang="en">
 
 <head>
-    <title>Lab 1 - Artemis</title>
+    <title>Lab 1 - Artemis | Michael Crum's Portfolio</title>
 
     <!-- seo -->
     <meta name="author" content="Michael Crum">
-    <meta name="description" content="Michael Crum's portfolio and blog website.">
+    <meta name="description" content="Testing and setup of the Artemis Nano microcontroller.">
     <meta name="keywords" content="portfolio,developer,robotics,personal">
 
     <!-- display -->
@@ -19,88 +19,92 @@
 
     <!-- stylesheets -->
     <link rel="stylesheet" href="../styles/project_page.css">
+    <link href="../styles/themes/prism.css" rel="stylesheet" />
 
     <!-- font -->
     <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet" />
 </head>
 
 <body>
+    <script src="../styles/themes/prism.js"></script>
     <div id="left_pad"></div>
     <aside>
-        <h1><a href="..">ECE 4160:<br>Fast Robots</a></h1>
-        <h3><em>Labs:</em></h3>
+        <h1><a href="..">Fast Robots</a></h1>
+        <h3><em>Lab Reports:</em></h3>
         <nav>
             <ul>
-                <a href="../intro">
-    <li>
-        <img src="../intro/assets/snapshot.png">
+                <li>
+    <a href="../intro">
+        <img src="../intro/assets/snapshot.webp" alt="Introduction">
         <div>
             <p>Introduction</p>
             <em> 1.27.23</em>
         </div>
-    </li>
-</a>
-<br>
-<a href="../lab_1">
-    <li>
-        <img src="../lab_1/assets/snapshot.png">
+    </a>
+</li>
+<li>
+    <a href="../lab_1">
+        <img src="../lab_1/assets/snapshot.webp" alt="Lab 1 - Artemis">
         <div>
             <p>Lab 1 - Artemis</p>
             <em> 1.27.23</em>
         </div>
-    </li>
-</a>
-<br>
-<a href="../lab_2">
-    <li>
-        <img src="../lab_2/assets/snapshot.png">
+    </a>
+</li>
+<li>
+    <a href="../lab_2">
+        <img src="../lab_2/assets/snapshot.webp" alt="Lab 2 - Bluetooth Communication">
         <div>
             <p>Lab 2 - Bluetooth Communication</p>
             <em> 2.2.23</em>
         </div>
-    </li>
-</a>
-<br>
-<a href="../lab_3">
-    <li>
-        <img src="../lab_3/assets/snapshot.png">
+    </a>
+</li>
+<li>
+    <a href="../lab_3">
+        <img src="../lab_3/assets/snapshot.webp" alt="Lab 3 - Time Of Flight (ToF)">
         <div>
             <p>Lab 3 - Time Of Flight (ToF)</p>
             <em> 2.9.23</em>
         </div>
-    </li>
-</a>
-<br>
-<a href="../lab_4">
-    <li>
-        <img src="../lab_4/assets/snapshot.png">
+    </a>
+</li>
+<li>
+    <a href="../lab_4">
+        <img src="../lab_4/assets/snapshot.webp" alt="Lab 4 - IMU">
         <div>
             <p>Lab 4 - IMU</p>
             <em> 2.16.23</em>
         </div>
-    </li>
-</a>
-<br>
-<a href="../lab_5">
-    <li>
-        <img src="../lab_5/assets/snapshot.png">
+    </a>
+</li>
+<li>
+    <a href="../lab_5">
+        <img src="../lab_5/assets/snapshot.webp" alt="Lab 5 - Motors and Open Loop Control">
         <div>
             <p>Lab 5 - Motors and Open Loop Control</p>
             <em> 2.23.23</em>
         </div>
-    </li>
-</a>
-<br>
-<a href="../lab_6">
-    <li>
-        <img src="../lab_6/assets/snapshot.png">
+    </a>
+</li>
+<li>
+    <a href="../lab_6">
+        <img src="../lab_6/assets/snapshot.webp" alt="Lab 6 - PID Speed Control">
         <div>
             <p>Lab 6 - PID Speed Control</p>
             <em> 2.23.23</em>
         </div>
-    </li>
-</a>
-<br>
+    </a>
+</li>
+<li>
+    <a href="../lab_7">
+        <img src="../lab_7/assets/snapshot.webp" alt="Lab 7 - Kalman Filter">
+        <div>
+            <p>Lab 7 - Kalman Filter</p>
+            <em> 2.23.23</em>
+        </div>
+    </a>
+</li>
             </ul>
         </nav>
     </aside>
@@ -111,23 +115,24 @@
         <em class="date">
             1.27.23
         </em>
+        <br>
         <h2 id="introduction">Introduction</h2>
 <p>This week in lab I configured my laptop to deploy code to the Artemis board using the Arduino IDE.</p>
 <h2 id="process">Process</h2>
 <p>First I downloaded and installed the Arduino IDE and the Sparkfun Apollo support software according to the documentation pages.</p>
 <p>I was able to upload the blink example with no issues. You can see the board executing the blinking code below:</p>
-<iframe width="411" height="730" src="https://www.youtube.com/embed/1FI0Ik1U8eg" title="ECE 4160 - Blink Test" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+<iframe width="411" height="730" src="https://www.youtube.com/embed/1FI0Ik1U8eg" title="ECE 4160 - Blink Test" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen=""></iframe>
 <p>I then tested serial communication using the serial example code. This resulted in the serial console shown below. I was able to send messages to the Artemis from my laptop, and the Artemis echoed them back to me:</p>
-<p><img src="./assets/serial.png" alt="The serial console generated by the example code" /></p>
+<p><img src="./assets/serial.webp" alt="The serial console generated by the example code"></p>
 <p>Next I tested the temperature sensor. After uploading the analogRead example code, I observed the following values from the serial monitor:</p>
-<p><img src="./assets/temp_cold.png" alt="The serial console generated by the temperature sensor example code" /></p>
+<p><img src="./assets/temp_cold.webp" alt="The serial console generated by the temperature sensor example code"></p>
 <p>I then wrapped my hand around the Artemis, raising the temperature of the board. This resulted in elevated readings in the serial monitor:</p>
-<p><img src="./assets/temp_hot.png" alt="The serial console generated by the temperature sensor example code after warming" /></p>
+<p><img src="./assets/temp_hot.webp" alt="The serial console generated by the temperature sensor example code after warming"></p>
 <p>Finally, I tested the onboard microphone. I uploaded the MicrophoneOutput example code and initially observed the following readings with ambient noise in the room:</p>
-<p><img src="./assets/mic_no_tone.png" alt="Microphone readings with ambient noise" /></p>
+<p><img src="./assets/mic_no_tone.webp" alt="Microphone readings with ambient noise"></p>
 <p>I then used a tone generator on my phone to generate tones at various frequencies. The following screenshots show readings while a 114 Hz and 263 Hz tone was playing, respectively.</p>
-<p><img src="./assets/mic_114.png" alt="Microphone readings with 114 Hz tone playing" /></p>
-<p><img src="./assets/mic_263.png" alt="Microphone readings with 114 Hz tone playing" /></p>
+<p><img src="./assets/mic_114.webp" alt="Microphone readings with 114 Hz tone playing"></p>
+<p><img src="./assets/mic_263.webp" alt="Microphone readings with 114 Hz tone playing"></p>
 <h2 id="conclusions">Conclusions</h2>
 <p>With the various systems onboard the Artemis tested, I am confident that the board will be functional for future labs.</p>
     </article>

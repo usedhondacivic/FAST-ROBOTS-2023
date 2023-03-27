@@ -22,7 +22,7 @@ Before soldering all of the connections, I used an oscilloscope and bench power 
 
 The test was run using ~50% duty cycle. This is achieved using the following C code:
 
-```
+```cpp
 analogWrite(13, 150);
 analogWrite(14, 0);
 ```
@@ -39,7 +39,7 @@ Once the components were confirmed functional, I soldered the rest of the connec
 
 To test the system on battery power, I wrote a script that spins the car in place at oscillating speeds. Below is the code and a video showing the resulting movement.
 
-```
+```cpp
 int t = (millis() / 10) % 510 - 255;
 if(t < 0){
     t = -t;
@@ -65,7 +65,7 @@ When I attempted to drive the car in a straight line, it veered significantly to
 
 I then inserted some turns and direction changes into the code, resulting in more interesting movement. Below is the code and resulting movement.
 
-```
+```cpp
 if(millis() - start_time < 1000){
     analogWrite(15, 150);
     analogWrite(12, 0);
