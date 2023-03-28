@@ -12,10 +12,27 @@ To use the Kalman filter we first need a model of the dynamics of the robot. As 
 
 ```latex
 \begin{bmatrix}
-a & b \\
-c & d 
+\dot{x} \\
+\ddot{x}
 \end{bmatrix}
+=
+\begin{bmatrix}
+0 & 1 \\
+0 & -\frac{d}{m} 
+\end{bmatrix}
+\begin{bmatrix}
+x \\
+\dot{x}
+\end{bmatrix}
++
+\begin{bmatrix}
+0 \\
+\frac{1}{m}
+\end{bmatrix}
+u
 ```
+
+We can find d (drag) from the steady state speed of the car, and m (momentum) from the rise time of the velocity.
 
 I used 45% duty cycle (115 / 255) for my tests because it was the average PWM output during my stunt for lab 6. I set the car to output this to the wheels, and ran it straight into a wall.
 
@@ -35,11 +52,110 @@ Because I used a high speed for my car in lab 6, I was unable to get the car to 
 
 ![Velocity from the fitted TOF data](./assets/velocity_fitted.png)
 
-We can see that at 45% duty cycle
+We can see that at 45% duty cycle, the car gets to a steady state of 1.75 m/s after 200s. This seems reasonable, so I used these values to calculate my constants as:
 
+```latex
+d = \frac{u}{\dot{x}} = \frac{1}{175000} = 5.71 \times 10^{-6}
+```
+```latex
+m = \frac{-d*t_{0.9}}{\ln(0.1)} = \frac{-5.71 \times 10^{-6} \cdot 0.9 \cdot 200}{\ln(0.1)}
+```
+
+## Implementing the KF
+
+Once I had found my model, all that was left to do was put it into code! Below is the python implementation of my Kalman filter.
+
+```python
+# Load in data
+motor_input = np.load("motor_lab_6.npy")
+motor_input = (motor_input[:, 1] + motor_input[:, 2]) / 2
+
+tof_output = np.load("tof_lab_6.npy")
+# My sensors are at an angle, so adjust for the depth. Also take the average
+angle = 13 * math.pi / 180
+tof_output[:, 1] = tof_output[:, 1] * np.cos(angle)
+tof_output[:, 2] = tof_output[:, 2] * np.cos(angle)
+tof_output[:, 1] = (tof_output[:, 1] + tof_output[:, 2]) / 2
+
+# Calculate dynamics matrices
+steady_state = 175000
+t = 225-25
+
+d = 1/steady_state
+m = (-d*0.9*t)/np.log(0.1)
+
+A = np.array([[0, 1], [0, -d/m]])
+B = np.array([[0], [1/m]])
+C = np.array([[-1,0]])
+
+# This just finds the average sampling time
+Delta_T = np.mean(velocity[:, 4]) / 1000.0
+
+# Discritize the dynamics
+Ad = np.eye(2) + Delta_T * A
+Bd = Delta_T * B
+
+# Set covarience
+sig_u = np.array([[10**2,0],[0,10**2]])
+sig_z = np.array([[20**2]])
+
+# inital state / uncertainty
+sig = np.array([[5**2,0],[0,5**2]])
+x = np.array([[-tof_output[0, 1]],[0]])
+
+def kf(mu,sigma,u,y):
+    mu_p = Ad.dot(mu) + Bd.dot(u) 
+    sigma_p = Ad.dot(sigma.dot(Ad.transpose())) + sig_u
+    
+    
+    sigma_m = C.dot(sigma_p.dot(C.transpose())) + sig_z
+    kkf_gain = sigma_p.dot(C.transpose().dot(np.linalg.inv(sigma_m)))
+
+    y_m = y-C.dot(mu_p)
+    mu = mu_p + kkf_gain.dot(y_m)    
+    sigma=(np.eye(2)-kkf_gain.dot(C)).dot(sigma_p)
+
+    return mu,sigma
+
+kf_state = []
+
+#downsample motor inputs to have an equal number of points as the tof readings
+R = tof_output.shape[0]
+pad_size = math.ceil(float(motor_input.size)/R)*R -motor_input.size
+motor_input_padded = np.append(motor_input, np.zeros(pad_size)*np.NaN)
+motor_input = np.nanmean(motor_input_padded.reshape(-1,R), axis=0)
+
+# Run the KF
+for u, d in zip(motor_input, tof_output[:, 1]):
+    x, sig = kf(x, sig, np.array([[u / 130]]), np.array([[d]]))
+    kf_state.append(x[:,0])
+    
+kf_state = np.array(kf_state).astype(float)
+```
 
 ## Testing on Old Data
 
+To sanity check my KF, I used data from my run at the wall and from lab 6 to check my that my KF output looks right. Below is the graphs from the lab 6 and lab 7 runs respectively.
+
+![The KF on the lab 6 run](./assets/kf_drift.png)
+![The KF on the lab 7 run](./assets/kf_wall_run.png)
+
+The KF filter works well until the robot begins to turn or hits a wall. This makes sense, as the model is based only on the robot running straight at a wall, and doesn't account for turning.
+
 ## Implementing on the Artemis
 
+To be useful on the robot, we need to convert the python implementation into C++ to run on the Artemis.
+
+Here is the C++ version I wrote:
+
+```cpp
+Serial.println("coming soon");
+```
+
+And here is a graph of a wall run coming directly from the robot:
+
+*insert graph*
+
 ## Results
+
+I used the Kalman filter to speed up my control loop for my stunt in lab 8! To see the results, read [that writeup](../lab_8).

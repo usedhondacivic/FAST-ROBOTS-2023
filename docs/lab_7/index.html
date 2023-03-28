@@ -19,8 +19,12 @@
 
     <!-- stylesheets -->
     <link rel="stylesheet" href="../styles/project_page.css">
-    <link href="../styles/themes/prism.css" rel="stylesheet" />
+    <link rel="stylesheet" href="../styles/highlight/styles/base16/bright.min.css">
     <link rel="stylesheet" href="../styles/katex/katex.min.css">
+
+    <!-- syntax highlighting-->
+    <script src="../styles/highlight/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
 
     <!-- latex support-->
     <script defer src="../styles/katex/katex.min.js"></script>
@@ -109,6 +113,15 @@
         </div>
     </a>
 </li>
+<li>
+    <a href="../lab_8">
+        <img src="../lab_8/assets/snapshot.webp" alt="Lab 8 - Stunts!">
+        <div>
+            <p>Lab 8 - Stunts!</p>
+            <em> 2.23.23</em>
+        </div>
+    </a>
+</li>
             </ul>
         </nav>
     </aside>
@@ -127,21 +140,140 @@
 <h2 id="establishingamodel">Establishing a Model</h2>
 <p>To use the Kalman filter we first need a model of the dynamics of the robot. As derived in class, we know that the state space equation for the car is</p>
 <span title="\begin{bmatrix}
-a &amp; b \\
-c &amp; d 
-\end{bmatrix}"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo fence="true">[</mo><mtable rowspacing="0.15999999999999992em" columnspacing="1em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mi>a</mi></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="false"><mi>b</mi></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mi>c</mi></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="false"><mi>d</mi></mstyle></mtd></mtr></mtable><mo fence="true">]</mo></mrow><annotation encoding="application/x-tex">\begin{bmatrix}
-a &amp; b \\
-c &amp; d 
+\dot{x} \\
+\ddot{x}
 \end{bmatrix}
-</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:2.40003em;vertical-align:-0.95003em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;"><span class="delimsizing size3">[</span></span><span class="mord"><span class="mtable"><span class="col-align-c"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.45em;"><span style="top:-3.61em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathdefault">a</span></span></span><span style="top:-2.4099999999999997em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathdefault">c</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.9500000000000004em;"><span></span></span></span></span></span><span class="arraycolsep" style="width:0.5em;"></span><span class="arraycolsep" style="width:0.5em;"></span><span class="col-align-c"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.45em;"><span style="top:-3.61em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathdefault">b</span></span></span><span style="top:-2.4099999999999997em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathdefault">d</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.9500000000000004em;"><span></span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;"><span class="delimsizing size3">]</span></span></span></span></span></span></span></span>
+=
+\begin{bmatrix}
+0 &amp; 1 \\
+0 &amp; -\frac{d}{m} 
+\end{bmatrix}
+\begin{bmatrix}
+x \\
+\dot{x}
+\end{bmatrix}
++
+\begin{bmatrix}
+0 \\
+\frac{1}{m}
+\end{bmatrix}
+u"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mo fence="true">[</mo><mtable rowspacing="0.15999999999999992em" columnspacing="1em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mover accent="true"><mi>x</mi><mo>˙</mo></mover></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mover accent="true"><mi>x</mi><mo>¨</mo></mover></mstyle></mtd></mtr></mtable><mo fence="true">]</mo></mrow><mo>=</mo><mrow><mo fence="true">[</mo><mtable rowspacing="0.15999999999999992em" columnspacing="1em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mn>0</mn></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="false"><mn>1</mn></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mn>0</mn></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><mo>−</mo><mfrac><mi>d</mi><mi>m</mi></mfrac></mrow></mstyle></mtd></mtr></mtable><mo fence="true">]</mo></mrow><mrow><mo fence="true">[</mo><mtable rowspacing="0.15999999999999992em" columnspacing="1em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mi>x</mi></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mover accent="true"><mi>x</mi><mo>˙</mo></mover></mstyle></mtd></mtr></mtable><mo fence="true">]</mo></mrow><mo>+</mo><mrow><mo fence="true">[</mo><mtable rowspacing="0.15999999999999992em" columnspacing="1em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mn>0</mn></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mfrac><mn>1</mn><mi>m</mi></mfrac></mstyle></mtd></mtr></mtable><mo fence="true">]</mo></mrow><mi>u</mi></mrow><annotation encoding="application/x-tex">\begin{bmatrix}
+\dot{x} \\
+\ddot{x}
+\end{bmatrix}
+=
+\begin{bmatrix}
+0 &amp; 1 \\
+0 &amp; -\frac{d}{m} 
+\end{bmatrix}
+\begin{bmatrix}
+x \\
+\dot{x}
+\end{bmatrix}
++
+\begin{bmatrix}
+0 \\
+\frac{1}{m}
+\end{bmatrix}
+u
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:2.40003em;vertical-align:-0.95003em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;"><span class="delimsizing size3">[</span></span><span class="mord"><span class="mtable"><span class="col-align-c"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.45em;"><span style="top:-3.61em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.66786em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathdefault">x</span></span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.11111000000000001em;"><span class="mord">˙</span></span></span></span></span></span></span></span></span><span style="top:-2.4099999999999997em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.66786em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathdefault">x</span></span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.22222em;"><span class="mord">¨</span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.9500000000000004em;"><span></span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;"><span class="delimsizing size3">]</span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:2.4401080000000004em;vertical-align:-0.9700540000000004em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;"><span class="delimsizing size3">[</span></span><span class="mord"><span class="mtable"><span class="col-align-c"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.470054em;"><span style="top:-3.630054em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">0</span></span></span><span style="top:-2.3899459999999997em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.9700540000000004em;"><span></span></span></span></span></span><span class="arraycolsep" style="width:0.5em;"></span><span class="arraycolsep" style="width:0.5em;"></span><span class="col-align-c"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.470054em;"><span style="top:-3.630054em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">1</span></span></span><span style="top:-2.3899459999999997em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">−</span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8801079999999999em;"><span style="top:-2.6550000000000002em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">m</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">d</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.345em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.9700540000000004em;"><span></span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;"><span class="delimsizing size3">]</span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;"><span class="delimsizing size3">[</span></span><span class="mord"><span class="mtable"><span class="col-align-c"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.45em;"><span style="top:-3.61em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathdefault">x</span></span></span><span style="top:-2.4099999999999997em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.66786em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathdefault">x</span></span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.11111000000000001em;"><span class="mord">˙</span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.9500000000000004em;"><span></span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;"><span class="delimsizing size3">]</span></span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:2.4051080000000002em;vertical-align:-0.9525540000000003em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;"><span class="delimsizing size3">[</span></span><span class="mord"><span class="mtable"><span class="col-align-c"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.452554em;"><span style="top:-3.612554em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">0</span></span></span><span style="top:-2.4074459999999998em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.845108em;"><span style="top:-2.6550000000000002em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight">m</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.345em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.9525540000000003em;"><span></span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;"><span class="delimsizing size3">]</span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathdefault">u</span></span></span></span></span></span>
+<p>We can find d (drag) from the steady state speed of the car, and m (momentum) from the rise time of the velocity.</p>
+<p>I used 45% duty cycle (115 / 255) for my tests because it was the average PWM output during my stunt for lab 6. I set the car to output this to the wheels, and ran it straight into a wall.</p>
 <p>Here is the car's TOF readings over time. You can see the point it hits the wall, after which the data isn't useful for finding our constants. I cropped the data to only the relevant range, then calculated its derivative to get the velocity of the car.</p>
 <p><img src="./assets/orig_data.webp" alt="The original data"></p>
 <p><img src="./assets/clipped_tof_data.webp" alt="The clipped data"></p>
 <p><img src="./assets/clipped_tof_average_data.webp" alt="The velocity data"></p>
-<p>Because I used a high speed for my car in lab 6, I was unable to get the car to reach steady state in the hallway. Instead, I used a shorter sample and fit a third degree polynomial to the curve. This allowed me to extend the curve to a longer sample without actually collecting new data.</p>
+<p>There was a box to the right side of the car on this run, resulting in a spike on the sensor B readings. Because of this, I use only sensor A's readings. As is shown in the velocity graph, the car did not reach steady state, which would result in a constant velocity.</p>
+<p>Because I used a high speed for my car in lab 6, I was unable to get the car to reach steady state in the hallway. To find the rise time and steady state speed, I instead fitted a polynomial curve to the data and used that to find my constants. Below is the curve fitted to the TOF data + the velocity from this data.</p>
+<p><img src="./assets/tof_fitted.webp" alt="The fitted TOF data"></p>
+<p><img src="./assets/velocity_fitted.webp" alt="Velocity from the fitted TOF data"></p>
+<p>We can see that at 45% duty cycle, the car gets to a steady state of 1.75 m/s after 200s. This seems reasonable, so I used these values to calculate my constants as:</p>
+<span title="d = \frac{u}{\dot{x}} = \frac{1}{175000} = 5.71 \times 10^{-6}"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mo>=</mo><mfrac><mi>u</mi><mover accent="true"><mi>x</mi><mo>˙</mo></mover></mfrac><mo>=</mo><mfrac><mn>1</mn><mn>175000</mn></mfrac><mo>=</mo><mn>5.71</mn><mo>×</mo><mn>1</mn><msup><mn>0</mn><mrow><mo>−</mo><mn>6</mn></mrow></msup></mrow><annotation encoding="application/x-tex">d = \frac{u}{\dot{x}} = \frac{1}{175000} = 5.71 \times 10^{-6}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathdefault">d</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1.7935600000000003em;vertical-align:-0.686em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.10756em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.66786em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathdefault">x</span></span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.11111000000000001em;"><span class="mord">˙</span></span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathdefault">u</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:2.00744em;vertical-align:-0.686em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.32144em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">1</span><span class="mord">7</span><span class="mord">5</span><span class="mord">0</span><span class="mord">0</span><span class="mord">0</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">5</span><span class="mord">.</span><span class="mord">7</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.864108em;vertical-align:0em;"></span><span class="mord">1</span><span class="mord"><span class="mord">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.864108em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">−</span><span class="mord mtight">6</span></span></span></span></span></span></span></span></span></span></span></span></span></span>
+<span title="m = \frac{-d*t_{0.9}}{\ln(0.1)} = \frac{-5.71 \times 10^{-6} \cdot 0.9 \cdot 200}{\ln(0.1)}"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi><mo>=</mo><mfrac><mrow><mo>−</mo><mi>d</mi><mo>∗</mo><msub><mi>t</mi><mn>0.9</mn></msub></mrow><mrow><mi>ln</mi><mo>⁡</mo><mo stretchy="false">(</mo><mn>0.1</mn><mo stretchy="false">)</mo></mrow></mfrac><mo>=</mo><mfrac><mrow><mo>−</mo><mn>5.71</mn><mo>×</mo><mn>1</mn><msup><mn>0</mn><mrow><mo>−</mo><mn>6</mn></mrow></msup><mo>⋅</mo><mn>0.9</mn><mo>⋅</mo><mn>200</mn></mrow><mrow><mi>ln</mi><mo>⁡</mo><mo stretchy="false">(</mo><mn>0.1</mn><mo stretchy="false">)</mo></mrow></mfrac></mrow><annotation encoding="application/x-tex">m = \frac{-d*t_{0.9}}{\ln(0.1)} = \frac{-5.71 \times 10^{-6} \cdot 0.9 \cdot 200}{\ln(0.1)}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault">m</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:2.30744em;vertical-align:-0.936em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.37144em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mop">ln</span><span class="mopen">(</span><span class="mord">0</span><span class="mord">.</span><span class="mord">1</span><span class="mclose">)</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">−</span><span class="mord mathdefault">d</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">∗</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord"><span class="mord mathdefault">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.30110799999999993em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">0</span><span class="mord mtight">.</span><span class="mord mtight">9</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.936em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:2.427108em;vertical-align:-0.936em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.491108em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mop">ln</span><span class="mopen">(</span><span class="mord">0</span><span class="mord">.</span><span class="mord">1</span><span class="mclose">)</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">−</span><span class="mord">5</span><span class="mord">.</span><span class="mord">7</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord">1</span><span class="mord"><span class="mord">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">−</span><span class="mord mtight">6</span></span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord">0</span><span class="mord">.</span><span class="mord">9</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord">2</span><span class="mord">0</span><span class="mord">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.936em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span></span>
+<h2 id="implementingthekf">Implementing the KF</h2>
+<p>Once I had found my model, all that was left to do was put it into code! Below is the python implementation of my Kalman filter.</p>
+<pre><code class="python language-python"># Load in data
+motor_input = np.load("motor_lab_6.npy")
+motor_input = (motor_input[:, 1] + motor_input[:, 2]) / 2
+
+tof_output = np.load("tof_lab_6.npy")
+# My sensors are at an angle, so adjust for the depth. Also take the average
+angle = 13 * math.pi / 180
+tof_output[:, 1] = tof_output[:, 1] * np.cos(angle)
+tof_output[:, 2] = tof_output[:, 2] * np.cos(angle)
+tof_output[:, 1] = (tof_output[:, 1] + tof_output[:, 2]) / 2
+
+# Calculate dynamics matrices
+steady_state = 175000
+t = 225-25
+
+d = 1/steady_state
+m = (-d*0.9*t)/np.log(0.1)
+
+A = np.array([[0, 1], [0, -d/m]])
+B = np.array([[0], [1/m]])
+C = np.array([[-1,0]])
+
+# This just finds the average sampling time
+Delta_T = np.mean(velocity[:, 4]) / 1000.0
+
+# Discritize the dynamics
+Ad = np.eye(2) + Delta_T * A
+Bd = Delta_T * B
+
+# Set covarience
+sig_u = np.array([[10**2,0],[0,10**2]])
+sig_z = np.array([[20**2]])
+
+# inital state / uncertainty
+sig = np.array([[5**2,0],[0,5**2]])
+x = np.array([[-tof_output[0, 1]],[0]])
+
+def kf(mu,sigma,u,y):
+    mu_p = Ad.dot(mu) + Bd.dot(u) 
+    sigma_p = Ad.dot(sigma.dot(Ad.transpose())) + sig_u
+
+
+    sigma_m = C.dot(sigma_p.dot(C.transpose())) + sig_z
+    kkf_gain = sigma_p.dot(C.transpose().dot(np.linalg.inv(sigma_m)))
+
+    y_m = y-C.dot(mu_p)
+    mu = mu_p + kkf_gain.dot(y_m)    
+    sigma=(np.eye(2)-kkf_gain.dot(C)).dot(sigma_p)
+
+    return mu,sigma
+
+kf_state = []
+
+#downsample motor inputs to have an equal number of points as the tof readings
+R = tof_output.shape[0]
+pad_size = math.ceil(float(motor_input.size)/R)*R -motor_input.size
+motor_input_padded = np.append(motor_input, np.zeros(pad_size)*np.NaN)
+motor_input = np.nanmean(motor_input_padded.reshape(-1,R), axis=0)
+
+# Run the KF
+for u, d in zip(motor_input, tof_output[:, 1]):
+    x, sig = kf(x, sig, np.array([[u / 130]]), np.array([[d]]))
+    kf_state.append(x[:,0])
+
+kf_state = np.array(kf_state).astype(float)
+</code></pre>
 <h2 id="testingonolddata">Testing on Old Data</h2>
+<p>To sanity check my KF, I used data from my run at the wall and from lab 6 to check my that my KF output looks right. Below is the graphs from the lab 6 and lab 7 runs respectively.</p>
+<p><img src="./assets/kf_drift.webp" alt="The KF on the lab 6 run">
+<img src="./assets/kf_wall_run.webp" alt="The KF on the lab 7 run"></p>
+<p>The KF filter works well until the robot begins to turn or hits a wall. This makes sense, as the model is based only on the robot running straight at a wall, and doesn't account for turning.</p>
 <h2 id="implementingontheartemis">Implementing on the Artemis</h2>
+<p>To be useful on the robot, we need to convert the python implementation into C++ to run on the Artemis.</p>
+<p>Here is the C++ version I wrote:</p>
+<pre><code class="cpp language-cpp">Serial.println("coming soon");
+</code></pre>
+<p>And here is a graph of a wall run coming directly from the robot:</p>
+<p><em>insert graph</em></p>
 <h2 id="results">Results</h2>
+<p>I used the Kalman filter to speed up my control loop for my stunt in lab 8! To see the results, read <a href="../lab_8">that writeup</a>.</p>
     </article>
     <div id="right_pad"></div>
 </body>
