@@ -10,6 +10,9 @@
 
 #include "LinkedList.h"  // Linked List implementation: https://stackoverflow.com/questions/9986591/vectors-in-arduino
 
+#include "BasicLinearAlgebra.h"   //Use this library to work with matrices:
+using namespace BLA;               //This allows you to declare a matrix
+
 
 #define BLE_UUID_TEST_SERVICE "f74736e0-f5ac-4541-959d-e6c1f1b3f55c"
 #define BLE_UUID_RX_STRING "58482b00-4146-4122-be67-2d89016731a8"
@@ -19,6 +22,75 @@
 
 #define SERIAL_PORT Serial
 
+class KALMAN_FILTER{
+private:
+  Matrix<2,2> A;
+  Matrix<2,1> B;
+  Matrix<1,2> C;
+
+  Matrix<2,2> sig_u;
+  Matrix<1, 1> sig_z;
+
+  unsigned long last_time = NULL;
+
+public:
+  Matrix<2,1> mu;
+  Matrix<2,2> sig;
+
+  KALMAN_FILTER(){}
+
+  KALMAN_FILTER(Matrix<2,2> A_, Matrix<2,1> B_, Matrix<1,2> C_, Matrix<2,2> _sig_u, Matrix<1,1> _sig_z){
+    A = A_;
+    B = B_;
+    C = C_;
+
+    sig_u = _sig_u;
+    sig_z = _sig_z;
+  }
+
+  void update(Matrix<1,1> u, Matrix<1,1> y, bool update) {
+    if(last_time == NULL){
+      last_time = micros();
+    }
+    float dt = (micros() - last_time) / 1E6;
+
+    Matrix<2,2> eye = {1, 0, 0, 1};
+    Matrix<2,2> A_d = eye + A * dt;
+    Matrix<2,1> B_d = B * dt;
+    
+    // Thanks: https://anyafp.github.io/ece4960/labs/lab7/
+    Matrix<2,1> x_p = A_d*mu + B_d*u;
+    Matrix<2,2> sig_p = A_d*sig*(~A_d) + sig_u;
+
+    if(!update){
+      mu = x_p;
+      sig = sig_p;
+      last_time = micros();
+      return;
+    }
+
+    Matrix<1,1> y_curr = y;
+    Matrix<1,1> y_m = y_curr - C*x_p;
+    Matrix<1,1> sig_m = C*sig_p*(~C) + sig_z;
+
+    Matrix<1,1> sig_m_inv = sig_m;
+    Invert(sig_m_inv);
+
+    Matrix<2,1> kf_gain = sig_p*(~C)*(sig_m_inv);
+
+    // Update
+    mu = x_p + kf_gain*y_m;
+    sig = (eye - kf_gain*C)*sig_p;
+
+    last_time = micros();
+  }
+
+  void set_init(Matrix<2,1> mu_init, Matrix<2,2> sig_init){
+    mu = mu_init;
+    sig = sig_init;   
+    last_time = NULL; 
+  }
+};
 
 class PID_CONTROLLER {
 private:
@@ -95,6 +167,11 @@ public:
   void set_d_gain(double _d) {
     d = _d;
   }
+
+  void reset(){
+    last_time = NULL;
+    integrator = 0;
+  }
 };
 
 typedef struct {
@@ -107,6 +184,7 @@ typedef struct {
 typedef struct {
   int distA;
   int distB;
+  float kalmanEst;
   long int stamp;
 } TOF_DATA;
 
@@ -135,7 +213,7 @@ private:
 
   bool robot_enabled;
 
-  PID_CONTROLLER angle_controller;
+  KALMAN_FILTER distance_filter;
 
 public:
   enum BUFFER_TYPE { ACCEL,
@@ -184,7 +262,7 @@ public:
       myICM.begin(Wire, 1);
 
       ICM_20948_fss_t myFSS;
-      myFSS.g = dps2000;  // (ICM_20948_GYRO_CONFIG_1_FS_SEL_e)
+      myFSS.g = dps1000;  // (ICM_20948_GYRO_CONFIG_1_FS_SEL_e)
                           // dps250
                           // dps500
                           // dps1000
@@ -244,15 +322,6 @@ public:
     distanceSensorA.startRanging();
     distanceSensorB.startRanging();
 
-    pinMode(LED_BUILTIN, OUTPUT);
-    digitalWrite(LED_BUILTIN, HIGH);  // turn the LED on (HIGH is the voltage level)
-    delay(100);
-    digitalWrite(LED_BUILTIN, LOW);  // turn the LED off by making the voltage LOW
-    delay(100);
-    digitalWrite(LED_BUILTIN, HIGH);  // turn the LED on (HIGH is the voltage level)
-    delay(100);
-    digitalWrite(LED_BUILTIN, LOW);  // turn the LED off by making the voltage LOW
-
     data_buffers.enabled[ACCEL] = false;
     data_buffers.enabled[GYRO] = false;
     data_buffers.enabled[MAG] = false;
@@ -262,34 +331,72 @@ public:
 
     pid_controllers.setpoints[ROTATION] = 0;
 
+    Serial.println("Initalizing Kalman Filter...");
+
+    int steady_state = 175000;
+    int t = 225-25;
+
+    float d = 1/(float)steady_state;
+    float m = (-d*0.9*(float)t)/log(0.1);
+
+    Matrix<2,2> A = {0, 1, 0, -d/m};
+    Matrix<2,1> B = {0, 1/m};
+    Matrix<1,2> C = {-1, 0};
+
+    Matrix<2,2> sig_u = {pow(10, 2), 0, 0, pow(10, 2)};
+    Matrix<1,1> sig_z = {pow(20, 2)};
+
+    distance_filter = KALMAN_FILTER(A, B, C, sig_u, sig_z);
+
+    Serial.println("Kalman Filter Online!");
+
     robot_enabled = false;
 
     Serial.println("Robot successfully booted!");
+
+    pinMode(LED_BUILTIN, OUTPUT);
+    digitalWrite(LED_BUILTIN, HIGH);  // turn the LED on (HIGH is the voltage level)
+    delay(100);
+    digitalWrite(LED_BUILTIN, LOW);  // turn the LED off by making the voltage LOW
+    delay(100);
+    digitalWrite(LED_BUILTIN, HIGH);  // turn the LED on (HIGH is the voltage level)
+    delay(100);
+    digitalWrite(LED_BUILTIN, LOW);  // turn the LED off by making the voltage LOW
   }
 
   void update() {
     if (!robot_enabled) {
       set_wheel_output(0.0, 0.0);
       pid_controllers.setpoints[ROTATION] = 0;
+      pid_controllers.pid[ROTATION].reset();
       update_sensor_readings();
       sensor_readings.gyro.z = 0;
+      // # inital state / uncertainty
+      // x = np.array([[-tof_output[0, 1]],[0]])
+      // sig = np.array([[5**2,0],[0,5**2]])
+
+      int tof_avg = (sensor_readings.tof.distA + sensor_readings.tof.distB) / 2;
+      Matrix<2,1> mu_init = {-(float)tof_avg, 0};
+      Matrix<2,2> sig_init = {pow(5, 2), 0, 0, pow(5, 2)};
+      distance_filter.set_init(mu_init, sig_init);
       return;
     }
 
     update_sensor_readings();
     update_pid_controllers();
 
-    if (pid_controllers.setpoints[ROTATION] == 0.0 && sensor_readings.tof.distA < 2000 && sensor_readings.tof.distB < 2000) {
+    Serial.println(distance_filter.mu(0));
+
+    if (pid_controllers.setpoints[ROTATION] == 0.0 && distance_filter.mu(0) >-2000) {
       pid_controllers.setpoints[ROTATION] = 180;
     }
 
-    //double turn_val = pid_controllers.pid[ROTATION].output;
-    //set_wheel_output(0.45 - turn_val, 0.45 + turn_val);
-    if(sensor_readings.tof.distA > 500 && sensor_readings.tof.distB > 500)
-      set_wheel_output(0.60, 0.45);
-    else
-      set_wheel_output(0, 0, true); // brake
-      
+    double turn_val = pid_controllers.pid[ROTATION].output;
+    set_wheel_output(0.6 - turn_val, 0.6 + turn_val);
+    // if(sensor_readings.tof.distA > 1000 && sensor_readings.tof.distB > 1000)
+    //   set_wheel_output(0.60, 0.45);
+    // else
+    //   set_wheel_output(0, 0, true); // brake
   }
   
   void set_wheel_output(double left, double right){
@@ -298,6 +405,7 @@ public:
 
   // 1.0 = full forward, -1.0 = full backwards
   void set_wheel_output(double left, double right, bool brake) {
+    right = right * 0.7; // Make it go straight
     int deadband = 20;
     int remaining_band = 255 - deadband;
     int left_sign = left / abs(left);
@@ -328,6 +436,10 @@ public:
     motor_speed.y = output_right;
     motor_speed.stamp = millis();
 
+    float speed_avg = (output_left + output_right) / 2;
+    
+    distance_filter.update({speed_avg / 130}, {0}, false);
+
     long int last_write;
     if (data_buffers.motor_input.getLength() == 0) {
       last_write = 0;
@@ -354,6 +466,10 @@ public:
       distanceSensorB.clearInterrupt();
 
       sensor_readings.tof.stamp = millis();
+      
+      float avg_sensor_readings = (sensor_readings.tof.distA  + sensor_readings.tof.distB) / 2;
+      distance_filter.update({0}, {avg_sensor_readings}, true);
+      sensor_readings.tof.kalmanEst = distance_filter.mu(0);
 
       if (data_buffers.enabled[TOF]) {
         data_buffers.tof.Append(sensor_readings.tof);
@@ -711,7 +827,6 @@ public:
           if (pid_type != CAR::PID_NA) {
             the_car->pid_controllers.pid[pid_type].set_gains(strtod(resp[1], NULL), strtod(resp[2], NULL), strtod(resp[2], NULL));
           }
-          Serial.println(strtod(resp[1], NULL));
         }
         break;
 
@@ -778,6 +893,10 @@ public:
     tx_estring_value.append(" | ");
     tx_estring_value.append("DistB: ");
     tx_estring_value.append(send->distB);
+
+    tx_estring_value.append(" | ");
+    tx_estring_value.append("Kalman: ");
+    tx_estring_value.append(send->kalmanEst);
 
     tx_characteristic_string.writeValue(tx_estring_value.c_str());
   }

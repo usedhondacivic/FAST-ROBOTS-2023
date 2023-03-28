@@ -34,7 +34,7 @@ u
 
 We can find d (drag) from the steady state speed of the car, and m (momentum) from the rise time of the velocity.
 
-I used 45% duty cycle (115 / 255) for my tests because it was the average PWM output during my stunt for lab 6. I set the car to output this to the wheels, and ran it straight into a wall.
+I used 50% duty cycle (130 / 255) for my tests because it was the average PWM output during my stunt for lab 6. I set the car to output this to the wheels, and ran it straight into a wall.
 
 Here is the car's TOF readings over time. You can see the point it hits the wall, after which the data isn't useful for finding our constants. I cropped the data to only the relevant range, then calculated its derivative to get the velocity of the car.
 
@@ -52,7 +52,7 @@ Because I used a high speed for my car in lab 6, I was unable to get the car to 
 
 ![Velocity from the fitted TOF data](./assets/velocity_fitted.png)
 
-We can see that at 45% duty cycle, the car gets to a steady state of 1.75 m/s after 200s. This seems reasonable, so I used these values to calculate my constants as:
+We can see that at 50% duty cycle, the car gets to a steady state of 1.75 m/s after 200s. This seems reasonable, so I used these values to calculate my constants as:
 
 ```latex
 d = \frac{u}{\dot{x}} = \frac{1}{175000} = 5.71 \times 10^{-6}
@@ -60,6 +60,8 @@ d = \frac{u}{\dot{x}} = \frac{1}{175000} = 5.71 \times 10^{-6}
 ```latex
 m = \frac{-d*t_{0.9}}{\ln(0.1)} = \frac{-5.71 \times 10^{-6} \cdot 0.9 \cdot 200}{\ln(0.1)}
 ```
+
+I also needed to estimate the standard deviation of the error for the dynamics and the sensor readings. I used 10 mm and 10 mm / s for the standard deviation of the dynamics. A tenth of a meter is about how closely I hope that the robot can be tracked, so I started with that value. For the sensor readings, I looked back at my data from previous labs and estimated a standard deviation of 20 mm. In simulation these values worked well, so I stuck with them.
 
 ## Implementing the KF
 
@@ -148,13 +150,114 @@ To be useful on the robot, we need to convert the python implementation into C++
 
 Here is the C++ version I wrote:
 
+Class:
+
 ```cpp
-Serial.println("coming soon");
+class KALMAN_FILTER{
+private:
+  Matrix<2,2> A;
+  Matrix<2,1> B;
+  Matrix<1,2> C;
+
+  Matrix<2,2> sig_u;
+  Matrix<1, 1> sig_z;
+
+  unsigned long last_time = NULL;
+
+public:
+  Matrix<2,1> mu;
+  Matrix<2,2> sig;
+
+  KALMAN_FILTER(){}
+
+  KALMAN_FILTER(Matrix<2,2> A_, Matrix<2,1> B_, Matrix<1,2> C_, Matrix<2,2> _sig_u, Matrix<1,1> _sig_z){
+    A = A_;
+    B = B_;
+    C = C_;
+
+    sig_u = _sig_u;
+    sig_z = _sig_z;
+  }
+
+  void update(Matrix<1,1> u, Matrix<1,1> y, bool update) {
+    if(last_time == NULL){
+      last_time = micros();
+    }
+    float dt = (micros() - last_time) / 1E6;
+
+    Matrix<2,2> eye = {1, 0, 0, 1};
+    Matrix<2,2> A_d = eye + A * dt;
+    Matrix<2,1> B_d = B * dt;
+    
+    // Thanks: https://anyafp.github.io/ece4960/labs/lab7/
+    Matrix<2,1> x_p = A_d*mu + B_d*u;
+    Matrix<2,2> sig_p = A_d*sig*(~A_d) + sig_u;
+
+    if(!update){
+      mu = x_p;
+      sig = sig_p;
+      last_time = micros();
+      return;
+    }
+
+    Matrix<1,1> y_curr = y;
+    Matrix<1,1> y_m = y_curr - C*x_p;
+    Matrix<1,1> sig_m = C*sig_p*(~C) + sig_z;
+
+    Matrix<1,1> sig_m_inv = sig_m;
+    Invert(sig_m_inv);
+
+    Matrix<2,1> kf_gain = sig_p*(~C)*(sig_m_inv);
+
+    // Update
+    mu = x_p + kf_gain*y_m;
+    sig = (eye - kf_gain*C)*sig_p;
+
+    last_time = micros();
+  }
+
+  void set_init(Matrix<2,1> mu_init, Matrix<2,2> sig_init){
+    mu = mu_init;
+    sig = sig_init;   
+    last_time = NULL; 
+  }
+};
 ```
 
-And here is a graph of a wall run coming directly from the robot:
+Initialization:
 
-*insert graph*
+```cpp
+int steady_state = 175000;
+int t = 225-25;
+
+float d = 1/(float)steady_state;
+float m = (-d*0.9*(float)t)/log(0.1);
+
+Matrix<2,2> A = {0, 1, 0, -d/m};
+Matrix<2,1> B = {0, 1/m};
+Matrix<1,2> C = {-1, 0};
+
+Matrix<2,2> sig_u = {pow(10, 2), 0, 0, pow(10, 2)};
+Matrix<1,1> sig_z = {pow(20, 2)};
+
+distance_filter = KALMAN_FILTER(A, B, C, sig_u, sig_z);
+
+int tof_avg = (sensor_readings.tof.distA + sensor_readings.tof.distB) / 2;
+Matrix<2,1> mu_init = {-(float)tof_avg, 0};
+Matrix<2,2> sig_init = {pow(5, 2), 0, 0, pow(5, 2)};
+distance_filter.set_init(mu_init, sig_init);
+```
+
+Reading:
+
+```cpp
+distance_filter.mu(0) // Or 1, for velocity
+distance_filter.sigma(0)
+```
+
+And here is data sent from the robot of it running into a wall:
+
+![Graph of the KF from the robot](./assets/arduino_kalman.png)
 
 ## Results
 
