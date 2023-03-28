@@ -12,7 +12,6 @@ var showdown = require('showdown'),
                 throwOnError: true,
                 errorColor: '#ff0000',
                 delimiters: [
-                    { left: "$", right: "$", display: false },
                     { left: "$$", right: "$$", display: true },
                     { left: '~', right: '~', display: false, asciimath: true },
                 ],
