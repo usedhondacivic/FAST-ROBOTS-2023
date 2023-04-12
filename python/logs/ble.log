@@ -510,3 +510,82 @@
 2023-03-28 16:56:39,946 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:83:0c:66:2f:3c
 2023-03-28 16:56:43,149 | MainThread   | [INFO    ] | _connect            |: Connected to c0:83:0c:66:2f:3c
 2023-03-28 16:59:11,600 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from C0:83:0C:66:2F:3C
+2023-04-12 15:09:04,036 | MainThread   | [DEBUG   ] | __init__            |: Python Info: sys.version_info(major=3, minor=10, micro=6, releaselevel='final', serial=0)
+2023-04-12 15:09:04,037 | MainThread   | [DEBUG   ] | __init__            |: System Info: Linux-5.19.0-38-generic-x86_64-with-glibc2.35
+2023-04-12 15:09:04,037 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:83:0c:66:2f:3c
+2023-04-12 15:09:08,795 | MainThread   | [INFO    ] | _connect            |: Connected to c0:83:0c:66:2f:3c
+2023-04-12 15:13:21,542 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from C0:83:0C:66:2F:3C
+2023-04-12 15:13:25,974 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:83:0c:66:2f:3c
+2023-04-12 15:13:29,211 | MainThread   | [ERROR   ] | _connect            |: [org.bluez.Error.Failed] le-connection-abort-by-local
+2023-04-12 15:13:30,215 | MainThread   | [WARNING ] | connect             |: Attempting to connect again...
+2023-04-12 15:13:30,217 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:83:0c:66:2f:3c
+2023-04-12 15:13:33,304 | MainThread   | [INFO    ] | _connect            |: Connected to c0:83:0c:66:2f:3c
+2023-04-12 15:20:08,912 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from C0:83:0C:66:2F:3C
+2023-04-12 15:25:25,424 | MainThread   | [INFO    ] | exit_handler        |: Exiting...
+2023-04-12 15:25:25,426 | MainThread   | [WARNING ] | exit_handler        |: Could not disconnect before exiting
+2023-04-12 15:25:25,427 | MainThread   | [WARNING ] | exit_handler        |: Not connected to a BLE device
+2023-04-12 15:25:25,730 | MainThread   | [WARNING ] | __del__             |: Could not delete BaseBLEController instance before exiting
+2023-04-12 15:25:25,734 | MainThread   | [WARNING ] | __del__             |: Not connected to a BLE device
+2023-04-12 15:25:47,212 | MainThread   | [DEBUG   ] | __init__            |: Python Info: sys.version_info(major=3, minor=10, micro=6, releaselevel='final', serial=0)
+2023-04-12 15:25:47,212 | MainThread   | [DEBUG   ] | __init__            |: System Info: Linux-5.19.0-38-generic-x86_64-with-glibc2.35
+2023-04-12 15:25:47,213 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:83:0c:66:2f:3c
+2023-04-12 15:25:50,371 | MainThread   | [INFO    ] | _connect            |: Connected to c0:83:0c:66:2f:3c
+2023-04-12 15:37:28,729 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from C0:83:0C:66:2F:3C
+2023-04-12 15:37:58,687 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:83:0c:66:2f:3c
+2023-04-12 15:38:02,269 | MainThread   | [INFO    ] | _connect            |: Connected to c0:83:0c:66:2f:3c
+2023-04-12 15:38:44,516 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from C0:83:0C:66:2F:3C
+2023-04-12 15:39:18,741 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:83:0c:66:2f:3c
+2023-04-12 15:39:21,967 | MainThread   | [ERROR   ] | _connect            |: [org.bluez.Error.Failed] le-connection-abort-by-local
+2023-04-12 15:39:22,970 | MainThread   | [WARNING ] | connect             |: Attempting to connect again...
+2023-04-12 15:39:22,972 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:83:0c:66:2f:3c
+2023-04-12 15:39:26,211 | MainThread   | [ERROR   ] | _connect            |: [org.bluez.Error.Failed] le-connection-abort-by-local
+2023-04-12 15:39:27,214 | MainThread   | [WARNING ] | connect             |: Attempting to connect again...
+2023-04-12 15:39:27,215 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:83:0c:66:2f:3c
+2023-04-12 15:39:30,630 | MainThread   | [INFO    ] | _connect            |: Connected to c0:83:0c:66:2f:3c
+2023-04-12 15:40:46,191 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from C0:83:0C:66:2F:3C
+2023-04-12 15:41:36,639 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:83:0c:66:2f:3c
+2023-04-12 15:41:39,303 | MainThread   | [ERROR   ] | _connect            |: [org.bluez.Error.Failed] le-connection-abort-by-local
+2023-04-12 15:41:40,306 | MainThread   | [WARNING ] | connect             |: Attempting to connect again...
+2023-04-12 15:41:40,308 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:83:0c:66:2f:3c
+2023-04-12 15:41:43,306 | MainThread   | [INFO    ] | _connect            |: Connected to c0:83:0c:66:2f:3c
+2023-04-12 15:47:27,300 | MainThread   | [INFO    ] | _connect            |: Already connected to a BLE device
+2023-04-12 15:54:37,709 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from C0:83:0C:66:2F:3C
+2023-04-12 15:54:46,597 | MainThread   | [INFO    ] | exit_handler        |: Exiting...
+2023-04-12 15:54:46,598 | MainThread   | [WARNING ] | exit_handler        |: Could not disconnect before exiting
+2023-04-12 15:54:46,598 | MainThread   | [WARNING ] | exit_handler        |: Not connected to a BLE device
+2023-04-12 15:54:46,751 | MainThread   | [WARNING ] | __del__             |: Could not delete BaseBLEController instance before exiting
+2023-04-12 15:54:46,753 | MainThread   | [WARNING ] | __del__             |: Not connected to a BLE device
+2023-04-12 15:54:57,719 | MainThread   | [DEBUG   ] | __init__            |: Python Info: sys.version_info(major=3, minor=10, micro=6, releaselevel='final', serial=0)
+2023-04-12 15:54:57,719 | MainThread   | [DEBUG   ] | __init__            |: System Info: Linux-5.19.0-38-generic-x86_64-with-glibc2.35
+2023-04-12 15:54:57,719 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:83:0c:66:2f:3c
+2023-04-12 15:55:00,722 | MainThread   | [INFO    ] | _connect            |: Connected to c0:83:0c:66:2f:3c
+2023-04-12 16:00:37,870 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from C0:83:0C:66:2F:3C
+2023-04-12 16:00:49,735 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:83:0c:66:2f:3c
+2023-04-12 16:00:52,194 | MainThread   | [ERROR   ] | _connect            |: [org.bluez.Error.Failed] le-connection-abort-by-local
+2023-04-12 16:00:53,196 | MainThread   | [WARNING ] | connect             |: Attempting to connect again...
+2023-04-12 16:00:53,200 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:83:0c:66:2f:3c
+2023-04-12 16:00:56,337 | MainThread   | [INFO    ] | _connect            |: Connected to c0:83:0c:66:2f:3c
+2023-04-12 16:06:10,840 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from C0:83:0C:66:2F:3C
+2023-04-12 16:07:22,354 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:83:0c:66:2f:3c
+2023-04-12 16:07:25,019 | MainThread   | [ERROR   ] | _connect            |: [org.bluez.Error.Failed] le-connection-abort-by-local
+2023-04-12 16:07:26,023 | MainThread   | [WARNING ] | connect             |: Attempting to connect again...
+2023-04-12 16:07:26,025 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:83:0c:66:2f:3c
+2023-04-12 16:07:29,163 | MainThread   | [INFO    ] | _connect            |: Connected to c0:83:0c:66:2f:3c
+2023-04-12 16:12:32,681 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from C0:83:0C:66:2F:3C
+2023-04-12 16:12:47,612 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:83:0c:66:2f:3c
+2023-04-12 16:12:50,379 | MainThread   | [ERROR   ] | _connect            |: [org.bluez.Error.Failed] le-connection-abort-by-local
+2023-04-12 16:12:51,382 | MainThread   | [WARNING ] | connect             |: Attempting to connect again...
+2023-04-12 16:12:51,384 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:83:0c:66:2f:3c
+2023-04-12 16:12:54,521 | MainThread   | [INFO    ] | _connect            |: Connected to c0:83:0c:66:2f:3c
+2023-04-12 16:14:03,450 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from C0:83:0C:66:2F:3C
+2023-04-12 16:14:21,228 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:83:0c:66:2f:3c
+2023-04-12 16:14:23,899 | MainThread   | [ERROR   ] | _connect            |: [org.bluez.Error.Failed] le-connection-abort-by-local
+2023-04-12 16:14:24,902 | MainThread   | [WARNING ] | connect             |: Attempting to connect again...
+2023-04-12 16:14:24,903 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:83:0c:66:2f:3c
+2023-04-12 16:14:27,631 | MainThread   | [ERROR   ] | _connect            |: [org.bluez.Error.Failed] le-connection-abort-by-local
+2023-04-12 16:14:28,634 | MainThread   | [WARNING ] | connect             |: Attempting to connect again...
+2023-04-12 16:14:28,637 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:83:0c:66:2f:3c
+2023-04-12 16:14:31,635 | MainThread   | [INFO    ] | _connect            |: Connected to c0:83:0c:66:2f:3c
+2023-04-12 16:18:06,869 | MainThread   | [INFO    ] | disconnect_handler  |: Disconnected from C0:83:0C:66:2F:3C
+2023-04-12 16:18:32,786 | MainThread   | [INFO    ] | _connect            |: Looking for Artemis Nano Peripheral Device: c0:83:0c:66:2f:3c
+2023-04-12 16:18:35,902 | MainThread   | [INFO    ] | _connect            |: Connected to c0:83:0c:66:2f:3c

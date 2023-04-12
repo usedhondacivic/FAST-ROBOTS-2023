@@ -367,7 +367,7 @@ public:
   void update() {
     if (!robot_enabled) {
       set_wheel_output(0.0, 0.0);
-      pid_controllers.setpoints[ROTATION] = 0;
+      pid_controllers.setpoints[ROTATION] = 10;
       pid_controllers.pid[ROTATION].reset();
       update_sensor_readings();
       sensor_readings.gyro.z = 0;
@@ -385,18 +385,11 @@ public:
     update_sensor_readings();
     update_pid_controllers();
 
-    Serial.println(distance_filter.mu(0));
+    float out = pid_controllers.pid[ROTATION].output;
 
-    if (pid_controllers.setpoints[ROTATION] == 0.0 && distance_filter.mu(0) >-2000) {
-      pid_controllers.setpoints[ROTATION] = 180;
-    }
+    set_wheel_output(out, -out);
+    //Serial.println(sensor_readings.gyro_delta.z);
 
-    double turn_val = pid_controllers.pid[ROTATION].output;
-    set_wheel_output(0.6 - turn_val, 0.6 + turn_val);
-    // if(sensor_readings.tof.distA > 1000 && sensor_readings.tof.distB > 1000)
-    //   set_wheel_output(0.60, 0.45);
-    // else
-    //   set_wheel_output(0, 0, true); // brake
   }
   
   void set_wheel_output(double left, double right){
@@ -405,7 +398,7 @@ public:
 
   // 1.0 = full forward, -1.0 = full backwards
   void set_wheel_output(double left, double right, bool brake) {
-    right = right * 0.7; // Make it go straight
+    right = right * 0.9; // Make it go straight
     int deadband = 20;
     int remaining_band = 255 - deadband;
     int left_sign = left / abs(left);
@@ -453,7 +446,7 @@ public:
   }
 
   void update_pid_controllers() {
-    pid_controllers.pid[ROTATION].step(pid_controllers.setpoints[ROTATION], sensor_readings.gyro.z);
+    pid_controllers.pid[ROTATION].step(pid_controllers.setpoints[ROTATION], sensor_readings.gyro_delta.z);
   }
 
   void update_sensor_readings() {
