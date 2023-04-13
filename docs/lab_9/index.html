@@ -131,6 +131,15 @@
         </div>
     </a>
 </li>
+<li>
+    <a href="../lab_10">
+        <img src="../lab_10/assets/snapshot.webp" alt="Lab 10 - Localization (Sim)">
+        <div>
+            <p>Lab 10 - Localization (Sim)</p>
+            <em> 4.20.23</em>
+        </div>
+    </a>
+</li>
             </ul>
         </nav>
     </aside>
@@ -171,7 +180,7 @@ set_wheel_output(out, -out);
 <img src="./assets/polar_5_3.webp" alt="Graph of the TOF readings">
 <img src="./assets/polar_5_-3.webp" alt="Graph of the TOF readings">
 <img src="./assets/polar_0_0.webp" alt="Graph of the TOF readings"></p>
-<p>The graphs show shapes consistent with a the shape of the area, and has the expected 30 degree offset between the two TOFs. Additionally, the range values seem reasonable (&gt; 0 and &lt; 2.5 m).</p>
+<p>The graphs show shapes consistent with a the shape of the area, and has the expected 40 degree offset between the two TOFs. Additionally, the range values seem reasonable (&gt; 0 and &lt; 2.5 m).</p>
 <h2 id="generatingamap">Generating a Map</h2>
 <p>The TOF readings I recorded are relative to the sensor's reference frame. For the map to be useful for navigation, we need to transform the data from the sensor frame to the world frame. Luckily, this is simple to achieve through some linear algebra.</p>
 <p>To get from the sensor frame to the robot frame requires a rotation (the 20 degree skew) and a translation (the TOF are mounted to the front of center). Then we can go from the robot's frame to the inertial (world) frame through a second rotation and translation.</p>

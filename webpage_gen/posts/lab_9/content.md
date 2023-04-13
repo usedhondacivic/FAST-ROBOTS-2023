@@ -45,7 +45,7 @@ Spinning a full 360 took 36 seconds, during which time the TOF sensors returned 
 ![Graph of the TOF readings](./assets/polar_5_-3.png)
 ![Graph of the TOF readings](./assets/polar_0_0.png)
 
-The graphs show shapes consistent with a the shape of the area, and has the expected 30 degree offset between the two TOFs. Additionally, the range values seem reasonable (> 0 and < 2.5 m).
+The graphs show shapes consistent with a the shape of the area, and has the expected 40 degree offset between the two TOFs. Additionally, the range values seem reasonable (> 0 and < 2.5 m).
 
 ## Generating a Map
 

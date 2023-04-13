@@ -31,7 +31,8 @@ robot:
     max_range: 6
     # Specify the angles (in a counter-clockwise direction) for the ToF sensor(s) where 0 degrees is at the robot's heading
     angles: 
-      - 0
+      - -20
+      - 20
     # IF AND ONLY IF "angles" is empty, sensor is defined by the total number of rays (total_rays),
     # between start_angle and end_angle.
     # For reference, here is the Python code internally used to generate angles: 
