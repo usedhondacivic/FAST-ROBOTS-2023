@@ -151,28 +151,28 @@
             2.23.23
         </em>
         <br>
-        <h2 id="introduction">Introduction</h2>
+        <h2>Introduction</h2>
 <p>In this lab we integrated our electronics into a toy car. The Artemis, IMU, TOF sensors, and batteries were all wired into the cars electrical system, allowing the Artemis to control the wheels.</p>
-<h2 id="prelab">Prelab</h2>
+<h2>Prelab</h2>
 <p>Before cutting or soldering any wires, I planned out my connections. To minimize noise, I placed the IMU as close as possible to the Artemis, and wired the two TOF sensors through it. The motor drivers are driven by two PWM pins each, which are designated on the schematic using a ~ to denote PWM functionality.</p>
 <p><img src="./assets/schematic.webp" alt="The Artemis schematic"></p>
 <p>I chose pins 12 through 15 because they are spatially grouped and are PWM capable.</p>
 <p>Additionally, the TOF sensors each need a GPIO pin to control their SHUTDOWN pins during boot up.</p>
-<h2 id="testingthemotordriver">Testing the Motor Driver</h2>
+<h2>Testing the Motor Driver</h2>
 <p>Before soldering all of the connections, I used an oscilloscope and bench power supply to test the motor drivers. Below is a picture of the wiring and the accompanying oscilloscope output. The bench supply is set to 3.7 V, the nominal voltage of a single cell LiPo.</p>
 <p><img src="./assets/test_wiring.webp" alt="The wiring for the test"></p>
 <p><img src="./assets/test_osc.webp" alt="The oscilloscope output"></p>
 <p>The test was run using ~50% duty cycle. This is achieved using the following C code:</p>
-<pre><code class="cpp language-cpp">analogWrite(13, 150);
+<pre><code class="language-cpp">analogWrite(13, 150);
 analogWrite(14, 0);
 </code></pre>
-<h2 id="assemblingthecar">Assembling the Car</h2>
+<h2>Assembling the Car</h2>
 <p>Once the components were confirmed functional, I soldered the rest of the connections and assembled the car. I connected the sensors to the chassis using hot glue.</p>
 <p><img src="./assets/car_top.webp" alt="The top of the car"></p>
 <p><img src="./assets/car_front.webp" alt="The front of the car"></p>
-<h2 id="openloopcontrol">Open Loop Control</h2>
+<h2>Open Loop Control</h2>
 <p>To test the system on battery power, I wrote a script that spins the car in place at oscillating speeds. Below is the code and a video showing the resulting movement.</p>
-<pre><code class="cpp language-cpp">int t = (millis() / 10) % 510 - 255;
+<pre><code class="language-cpp">int t = (millis() / 10) % 510 - 255;
 if(t &lt; 0){
     t = -t;
     analogWrite(15, t);
@@ -186,12 +186,12 @@ if(t &lt; 0){
     analogWrite(14, t);
 }
 </code></pre>
-<iframe width="100%" style="aspect-ratio: 9/5" src="https://www.youtube.com/embed/P0W7jTjzqeQ" title="ECE 4160 - Spin Test" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen=""></iframe>
+<iframe width="100%" style="aspect-ratio: 9/5" src="https://www.youtube.com/embed/P0W7jTjzqeQ" title="ECE 4160 - Spin Test" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 <p>I lowered the duty cycle incrementally to determine the lowest value that could overcome static friction, and found that 40/255 = ~16% duty cycle was the lowest that still made the car move.</p>
 <p>When I attempted to drive the car in a straight line, it veered significantly to the right. This is due to inconsistency in the construction and wear of the power trains on each side of the car. To compensate, I bumped up the duty cycle of the right side by 13%, which made the car drive straight.</p>
-<iframe width="100%" style="aspect-ratio: 9/5" src="https://www.youtube.com/embed/4HccnQ2blms" title="ECE 4160 - Straight Line Test" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen=""></iframe>
+<iframe width="100%" style="aspect-ratio: 9/5" src="https://www.youtube.com/embed/4HccnQ2blms" title="ECE 4160 - Straight Line Test" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 <p>I then inserted some turns and direction changes into the code, resulting in more interesting movement. Below is the code and resulting movement.</p>
-<pre><code class="cpp language-cpp">if(millis() - start_time &lt; 1000){
+<pre><code class="language-cpp">if(millis() - start_time &lt; 1000){
     analogWrite(15, 150);
     analogWrite(12, 0);
     analogWrite(13, 0);
@@ -218,7 +218,8 @@ if(t &lt; 0){
     analogWrite(14, 255);
 }
 </code></pre>
-<iframe width="100%" style="aspect-ratio: 9/5" src="https://www.youtube.com/embed/WaELzVR5jpI" title="ECE 4160 - Open Loop Control Test" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen=""></iframe>
+<iframe width="100%" style="aspect-ratio: 9/5" src="https://www.youtube.com/embed/WaELzVR5jpI" title="ECE 4160 - Open Loop Control Test" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+
     </article>
     <div id="right_pad"></div>
 </body>

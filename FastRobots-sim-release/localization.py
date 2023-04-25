@@ -48,6 +48,8 @@ class Mapper():
             robot.config_params["mapper"]["observations_count"])
         self.RAY_TRACING_ANGLE_INCREMENT = 360/self.OBS_PER_CELL
         self.RAY_LENGTH = robot.config_params["mapper"]["ray_tracing_length"]
+        self.SENSOR_COUNT = robot.config_params['sensors_count']
+        self.SENSOR_ANGLES = robot.config_params['sensor_angles_in_degrees']
 
         # Map Cells
         self.cells = np.zeros((self.MAX_CELLS_X,
@@ -57,18 +59,21 @@ class Mapper():
         self.obs_views = np.zeros((self.MAX_CELLS_X,
                                    self.MAX_CELLS_Y,
                                    self.MAX_CELLS_A,
-                                   self.OBS_PER_CELL
+                                   self.OBS_PER_CELL,
+                                   self.SENSOR_COUNT
                                    ))
         # Ray Intersection points based on the map
         self.obs_points_x = np.zeros((self.MAX_CELLS_X,
                                       self.MAX_CELLS_Y,
                                       self.MAX_CELLS_A,
-                                      self.OBS_PER_CELL
+                                      self.OBS_PER_CELL,
+                                      self.SENSOR_COUNT
                                       ))
         self.obs_points_y = np.zeros((self.MAX_CELLS_X,
                                       self.MAX_CELLS_Y,
                                       self.MAX_CELLS_A,
-                                      self.OBS_PER_CELL
+                                      self.OBS_PER_CELL,
+                                      self.SENSOR_COUNT
                                       ))
 
         # x, y and a indices in real world coordinates for each cell index
@@ -180,26 +185,27 @@ class Mapper():
                     self.y_values[cx, cy, ca] = pose[1]
                     self.a_values[cx, cy, ca] = pose[2]
 
-                    # Calculate bearings and tracing rays
-                    bearings = np.arange(
-                        0, 360, self.RAY_TRACING_ANGLE_INCREMENT) + pose[2]
+                    for j in range(0, self.SENSOR_COUNT):
+                        # Calculate bearings and tracing rays
+                        bearings = np.arange(
+                            0, 360, self.RAY_TRACING_ANGLE_INCREMENT) + pose[2] + self.SENSOR_ANGLES[j]
 
-                    tracing_rays = self.get_tracing_rays(pose[0],
-                                                         pose[1],
-                                                         bearings)
+                        tracing_rays = self.get_tracing_rays(pose[0],
+                                                             pose[1],
+                                                             bearings)
 
-                    # For each tracing ray, find the point of intersection and range
-                    view = None
-                    point = None
-                    for i in range(0, self.OBS_PER_CELL):
-                        try:
-                            view, point = self.get_intersection(
-                                tracing_rays[:, :, i], pose)
-                            self.obs_views[cx, cy, ca, i] = view
-                            self.obs_points_x[cx, cy, ca, i] = point[0]
-                            self.obs_points_y[cx, cy, ca, i] = point[1]
-                        except:
-                            pass
+                        # For each tracing ray, find the point of intersection and range
+                        view = None
+                        point = None
+                        for i in range(0, self.OBS_PER_CELL):
+                            try:
+                                view, point = self.get_intersection(
+                                    tracing_rays[:, :, i], pose)
+                                self.obs_views[cx, cy, ca, i, j] = view
+                                self.obs_points_x[cx, cy, ca, i, j] = point[0]
+                                self.obs_points_y[cx, cy, ca, i, j] = point[1]
+                            except:
+                                pass
 
         LOG.info(" | Precaching Time: {:.3f} secs".format(
             time.time() - start_time))
@@ -331,7 +337,7 @@ class BaseLocalization():
             "POS ERROR        : ({:.3f}, {:.3f}, {:.3f})".format(*pos_error))
 
         # Plot data
-        if(plot_data == True):
+        if (plot_data == True):
             self.cmdr.plot_gt(current_gt[0],
                               current_gt[1])
             self.cmdr.plot_odom(current_odom[0],
@@ -365,7 +371,7 @@ class BaseLocalization():
         LOG.info("POS ERROR     : ({:.3f}, {:.3f}, {:.3f})".format(*pos_error))
 
         # Plot data
-        if(plot_data == True):
+        if (plot_data == True):
             self.cmdr.plot_bel(current_belief[0],
                                current_belief[1])
 

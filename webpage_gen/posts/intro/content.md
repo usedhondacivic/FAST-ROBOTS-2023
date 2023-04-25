@@ -1,4 +1,4 @@
-![A picture of me :)](./assets/snapshot.png)
+<img style="max-height: 500px; aspect-ratio: 1/1;" src="./assets/snapshot.png">
 
 Hello! My name is Michael Crum, a Junior Computer Science student at Cornell University.
 

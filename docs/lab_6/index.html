@@ -151,11 +151,11 @@
             3.9.23
         </em>
         <br>
-        <h2 id="introduction">Introduction</h2>
+        <h2>Introduction</h2>
 <p>In this lab I used a PID controller to control the rotation of my car. This allowed me to execute a drifting turn at speed.</p>
-<h2 id="prelab">Prelab</h2>
+<h2>Prelab</h2>
 <p>Because streaming data over BLE during the stunt would slow down the control loop speed, I instead want to store the data and relay it after the stunt is complete. For maximum configurability I created a system for enabling / disabling the car and each of its data buffers from the python client.</p>
-<pre><code class="cpp language-cpp">enum BUFFER_TYPE { ACCEL,
+<pre><code class="language-cpp">enum BUFFER_TYPE { ACCEL,
                     GYRO,
                     MAG,
                     TOF,
@@ -175,28 +175,28 @@ bool enabled[num_buffers];
 } data_buffers;
 </code></pre>
 <p>Each buffer is stored as a linked list, which is appended too in the sensor update function only if that buffer is enabled. Enabling / disabling and retrieving a buffer is done on the python side as follows:</p>
-<pre><code class="cpp language-cpp">ble.send_command(CMD.ENABLE_BUFFER, "POSE")
-ble.send_command(CMD.ENABLE_BUFFER, "TOF")
-ble.send_command(CMD.ENABLE_BUFFER, "MOTOR")
+<pre><code class="language-cpp">ble.send_command(CMD.ENABLE_BUFFER, &quot;POSE&quot;)
+ble.send_command(CMD.ENABLE_BUFFER, &quot;TOF&quot;)
+ble.send_command(CMD.ENABLE_BUFFER, &quot;MOTOR&quot;)
 
-ble.send_command(CMD.DISABLE_BUFFER, "POSE")
-ble.send_command(CMD.DISABLE_BUFFER, "TOF")
-ble.send_command(CMD.DISABLE_BUFFER, "MOTOR")
+ble.send_command(CMD.DISABLE_BUFFER, &quot;POSE&quot;)
+ble.send_command(CMD.DISABLE_BUFFER, &quot;TOF&quot;)
+ble.send_command(CMD.DISABLE_BUFFER, &quot;MOTOR&quot;)
 
-ble.send_command(CMD.RETRIEVE_BUFFER, "POSE")
-ble.send_command(CMD.RETRIEVE_BUFFER, "TOF")
-ble.send_command(CMD.RETRIEVE_BUFFER, "MOTOR")
+ble.send_command(CMD.RETRIEVE_BUFFER, &quot;POSE&quot;)
+ble.send_command(CMD.RETRIEVE_BUFFER, &quot;TOF&quot;)
+ble.send_command(CMD.RETRIEVE_BUFFER, &quot;MOTOR&quot;)
 </code></pre>
 <p>Similarly, for disabling and enabling the car:</p>
-<pre><code class="cpp language-cpp">ble.send_command(CMD.ENABLE_ROBOT, "")
-ble.send_command(CMD.DISABLE_ROBOT, "")
+<pre><code class="language-cpp">ble.send_command(CMD.ENABLE_ROBOT, &quot;&quot;)
+ble.send_command(CMD.DISABLE_ROBOT, &quot;&quot;)
 </code></pre>
 <p>And finally, I can also tune the PID gains through another command:</p>
-<pre><code class="cpp language-cpp">ble.send_command(CMD.SET_PID_GAINS,"ROTATION:|0.005:|0.00001:|0.0")
+<pre><code class="language-cpp">ble.send_command(CMD.SET_PID_GAINS,&quot;ROTATION:|0.005:|0.00001:|0.0&quot;)
 </code></pre>
-<h2 id="pidimplementation">PID Implementation</h2>
+<h2>PID Implementation</h2>
 <p>My first step was implementing a PID controller in the Arduino IDE. My implementation is as follows:</p>
-<pre><code class="cpp language-cpp">class PID_CONTROLLER {
+<pre><code class="language-cpp">class PID_CONTROLLER {
 private:
   double p;
   double i;
@@ -264,13 +264,13 @@ public:
 <p>I structured the controller as a class so that I could reuse the code to create multiple PID controllers for future labs. The controller has a tunable sample rate and a setter for each of the gains. I take the derivative on measurement which minimizes derivative kick as described <a href="http://brettbeauregard.com/blog/2011/04/improving-the-beginner%E2%80%99s-pid-derivative-kick/">in this article</a>.</p>
 <p>I also implemented a cap on the integral term to avoid integral windup. It is arbitrarily set to 1000 because I didn't use it for lab 6, but it might use it in future applications.</p>
 <p>To update the controller, I use the following code:</p>
-<pre><code class="cpp language-cpp">pid_controllers.pid[ROTATION].step(pid_controllers.setpoints[ROTATION], sensor_readings.gyro.z);
+<pre><code class="language-cpp">pid_controllers.pid[ROTATION].step(pid_controllers.setpoints[ROTATION], sensor_readings.gyro.z);
 </code></pre>
-<h2 id="pidtuning">PID Tuning</h2>
+<h2>PID Tuning</h2>
 <p>To test my PID controller, I created a routine to make the car hold its z orientation at 0. Below is a video of the car holding orientation while I kick it.</p>
-<iframe width="514" height="913" src="https://www.youtube.com/embed/_LP3V2O9sA0" title="ECE 4160 - PID Orientation Control" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen=""></iframe>
+<iframe width="514" height="913" src="https://www.youtube.com/embed/_LP3V2O9sA0" title="ECE 4160 - PID Orientation Control" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 <p>While developing this controller, I noticed that if I kicked the car too hard its zero point would move. This is because I was saturating the gyro's update speed, and it was unable to integrate the measurement fast enough. The library we use to interface with the gyro provides a method to set the degrees per second of the gyro, which I maxed out:</p>
-<pre><code class="cpp language-cpp">ICM_20948_fss_t myFSS;
+<pre><code class="language-cpp">ICM_20948_fss_t myFSS;
 myFSS.g = dps2000;  // (ICM_20948_GYRO_CONFIG_1_FS_SEL_e)
                     // dps250
                     // dps500
@@ -280,7 +280,7 @@ myFSS.g = dps2000;  // (ICM_20948_GYRO_CONFIG_1_FS_SEL_e)
 myICM.setFullScale((ICM_20948_Internal_Acc | ICM_20948_Internal_Gyr), myFSS);
 </code></pre>
 <p>I also observed that the robot would often stop before its setpoint due to the motors deadband. The deadband is the range of applied voltages that are too small to overcome the static friction of the drivetrain, resulting in no motion. I resolved this by using math to map the input values outside of the deadbands.</p>
-<pre><code class="cpp language-cpp">int deadband = 20;
+<pre><code class="language-cpp">int deadband = 20;
 int remaining_band = 255 - deadband;
 int left_sign = left / abs(left);
 int right_sign = right / abs(right);
@@ -288,9 +288,9 @@ int right_sign = right / abs(right);
 int output_left = left_sign * deadband + left * remaining_band;
 int output_right = right_sign * deadband + right * remaining_band;
 </code></pre>
-<h2 id="stunt">Stunt</h2>
+<h2>Stunt</h2>
 <p>Now that I have a routine for controlling the car's orientation, I began attempting my drift. This only required minor changes to my stationary routine, mainly adding a bias to the motor values. This causes the car to move forward while also controlling rotation. Once both sensors report that the car is within a certain distance from the wall, I change the setpoint and cause the car to whip around.</p>
-<pre><code class="cpp language-cpp">update_sensor_readings();
+<pre><code class="language-cpp">update_sensor_readings();
 update_pid_controllers();
 
 if (pid_controllers.setpoints[ROTATION] == 0.0 &amp;&amp;
@@ -305,14 +305,15 @@ double turn_val = pid_controllers.pid[ROTATION].output;
 set_wheel_output(0.45 -turn_val, 0.45 + turn_val);
 </code></pre>
 <p>And here are some videos of the stunt working!</p>
-<iframe width="514" height="913" src="https://www.youtube.com/embed/PRtbnptDNm8" title="ECE 4160 - Drift Turn 3" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen=""></iframe>
-<iframe width="1280" height="720" src="https://www.youtube.com/embed/ElZs194mwh0" title="ECE 4160 - Drift Turn 2" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen=""></iframe>
-<iframe width="514" height="913" src="https://www.youtube.com/embed/UEwIo8tePNc" title="ECE 4160 - Drift turn 1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen=""></iframe>
-<h2 id="dataandgraphs">Data and Graphs</h2>
+<iframe width="514" height="913" src="https://www.youtube.com/embed/PRtbnptDNm8" title="ECE 4160 - Drift Turn 3" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+<iframe width="1280" height="720" src="https://www.youtube.com/embed/ElZs194mwh0" title="ECE 4160 - Drift Turn 2" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+<iframe width="514" height="913" src="https://www.youtube.com/embed/UEwIo8tePNc" title="ECE 4160 - Drift turn 1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+<h2>Data and Graphs</h2>
 <p>To ensure that the controller was behaving as intended, I logged data during the runs and graphed it after. In the graphs, you can see the setpoint moving and its effects on the motor outputs and rotation.</p>
 <p><img src="./assets/tof_graph.webp" alt="TOF graph">
 <img src="./assets/motor_graph.webp" alt="Motor graph">
 <img src="./assets/pose_graph.webp" alt="Pose graph"></p>
+
     </article>
     <div id="right_pad"></div>
 </body>

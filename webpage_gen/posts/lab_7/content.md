@@ -10,7 +10,7 @@ For help on this lab, I referenced Anya Prabowo's fantastic lab report, which yo
 
 To use the Kalman filter we first need a model of the dynamics of the robot. As derived in class, we know that the state space equation for the car is
 
-```latex
+$$
 \begin{bmatrix}
 \dot{x} \\
 \ddot{x}
@@ -30,7 +30,7 @@ x \\
 \frac{1}{m}
 \end{bmatrix}
 u
-```
+$$
 
 We can find d (drag) from the steady state speed of the car, and m (momentum) from the rise time of the velocity.
 
@@ -54,12 +54,12 @@ Because I used a high speed for my car in lab 6, I was unable to get the car to 
 
 We can see that at 50% duty cycle, the car gets to a steady state of 1.75 m/s after 200s. This seems reasonable, so I used these values to calculate my constants as:
 
-```latex
+$$
 d = \frac{u}{\dot{x}} = \frac{1}{175000} = 5.71 \times 10^{-6}
-```
-```latex
+$$
+$$
 m = \frac{-d*t_{0.9}}{\ln(0.1)} = \frac{-5.71 \times 10^{-6} \cdot 0.9 \cdot 200}{\ln(0.1)}
-```
+$$
 
 I also needed to estimate the standard deviation of the error for the dynamics and the sensor readings. I used 10 mm and 10 mm / s for the standard deviation of the dynamics. A tenth of a meter is about how closely I hope that the robot can be tracked, so I started with that value. For the sensor readings, I looked back at my data from previous labs and estimated a standard deviation of 20 mm. In simulation these values worked well, so I stuck with them.
 

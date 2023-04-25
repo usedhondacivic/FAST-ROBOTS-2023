@@ -55,20 +55,20 @@ To get from the sensor frame to the robot frame requires a rotation (the 20 degr
 
 From the sensor frame to the robot frame we can use some simple trigonometry to get:
 
-```latex
+$$
 \begin{bmatrix}
 x_{robot} & y_{robot} 
 \end{bmatrix}= 
 \begin{bmatrix}
 d \cdot cos(\pm 20) + 70 & d \cdot sin(\pm 20)
 \end{bmatrix}
-```
+$$
 
 Where d is the distance, or TOF reading, and 70 comes from how far forward the sensors are on the robot.
 
 From the robot frame to the inertial frame, I used the following transformation matrix: 
 
-```latex
+$$
 \begin{bmatrix}
 x_{world} \\
 y_{world} \\
@@ -84,7 +84,7 @@ x_{robot} \\
 y_{robot} \\
 1
 \end{bmatrix}
-```
+$$
 
 Where R and theta represent the robots coordinates in world space.
 
