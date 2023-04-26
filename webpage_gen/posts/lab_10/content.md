@@ -187,3 +187,7 @@ The update step updates our prediction by taking the product of our predicted be
 Here's the Bayes filter running on a robot moving in a deterministic trajectory.
 
 <iframe width="1253" height="705" src="https://www.youtube.com/embed/H-z7aL3v3xA?start=15" title="ECE 4160 - Bayes Filter" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+
+The filter predicts the correct location within one grid cell for almost all time steps. Initially it has difficulty determining which way the robot goes because of the symmetry of the left and right paths, but quickly converges on the correct location.
+
+In highly symmetric environments, sensor readings are not uniquely correlated with the pose they are taken from. That is to say, two (or more) locations might generate the same probability from the sensor update step but be very far apart. Therefore, the Bayes Filter works much better in asymmetric environments.
