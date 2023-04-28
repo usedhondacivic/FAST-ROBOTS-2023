@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Lab 11 - Localization (Real) | Michael Crum's Portfolio</title>
+
+    <!-- seo -->
+    <meta name="author" content="Michael Crum">
+    <meta name="description" content="Page for lab 11">
+    <meta name="keywords" content="portfolio,developer,robotics,personal">
+
+    <!-- display -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- icon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="../global_assets/icons/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="../global_assets/icons/favicon-16x16.png" />
+
+    <!-- stylesheets -->
+    <link rel="stylesheet" href="../styles/project_page.css">
+    <link rel="stylesheet" href="../styles/highlight/styles/base16/bright.min.css">
+    <link rel="stylesheet" href="../styles/katex/katex.min.css">
+
+    <!-- syntax highlighting-->
+    <script src="../styles/highlight/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+
+    <!-- latex support-->
+    <script defer src="../styles/katex/katex.min.js"></script>
+
+    <!-- font -->
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet" />
+</head>
+
+<body>
+    <script src="../styles/themes/prism.js"></script>
+    <div id="left_pad"></div>
+    <aside>
+        <h1><a href="..">Fast Robots</a></h1>
+        <h3><em>Lab Reports:</em></h3>
+        <nav>
+            <ul>
+                <li>
+    <a href="../intro">
+        <img src="../intro/assets/snapshot.webp" alt="Introduction">
+        <div>
+            <p>Introduction</p>
+            <em> 1.27.23</em>
+        </div>
+    </a>
+</li>
+<li>
+    <a href="../lab_1">
+        <img src="../lab_1/assets/snapshot.webp" alt="Lab 1 - Artemis">
+        <div>
+            <p>Lab 1 - Artemis</p>
+            <em> 1.27.23</em>
+        </div>
+    </a>
+</li>
+<li>
+    <a href="../lab_2">
+        <img src="../lab_2/assets/snapshot.webp" alt="Lab 2 - Bluetooth Communication">
+        <div>
+            <p>Lab 2 - Bluetooth Communication</p>
+            <em> 2.2.23</em>
+        </div>
+    </a>
+</li>
+<li>
+    <a href="../lab_3">
+        <img src="../lab_3/assets/snapshot.webp" alt="Lab 3 - Time Of Flight (ToF)">
+        <div>
+            <p>Lab 3 - Time Of Flight (ToF)</p>
+            <em> 2.9.23</em>
+        </div>
+    </a>
+</li>
+<li>
+    <a href="../lab_4">
+        <img src="../lab_4/assets/snapshot.webp" alt="Lab 4 - IMU">
+        <div>
+            <p>Lab 4 - IMU</p>
+            <em> 2.16.23</em>
+        </div>
+    </a>
+</li>
+<li>
+    <a href="../lab_5">
+        <img src="../lab_5/assets/snapshot.webp" alt="Lab 5 - Motors and Open Loop Control">
+        <div>
+            <p>Lab 5 - Motors and Open Loop Control</p>
+            <em> 2.23.23</em>
+        </div>
+    </a>
+</li>
+<li>
+    <a href="../lab_6">
+        <img src="../lab_6/assets/snapshot.webp" alt="Lab 6 - PID Orientation Control">
+        <div>
+            <p>Lab 6 - PID Orientation Control</p>
+            <em> 3.9.23</em>
+        </div>
+    </a>
+</li>
+<li>
+    <a href="../lab_7">
+        <img src="../lab_7/assets/snapshot.webp" alt="Lab 7 - Kalman Filter">
+        <div>
+            <p>Lab 7 - Kalman Filter</p>
+            <em> 3.16.23</em>
+        </div>
+    </a>
+</li>
+<li>
+    <a href="../lab_8">
+        <img src="../lab_8/assets/snapshot.webp" alt="Lab 8 - Stunts!">
+        <div>
+            <p>Lab 8 - Stunts!</p>
+            <em> 3.23.23</em>
+        </div>
+    </a>
+</li>
+<li>
+    <a href="../lab_9">
+        <img src="../lab_9/assets/snapshot.webp" alt="Lab 9 - Mapping">
+        <div>
+            <p>Lab 9 - Mapping</p>
+            <em> 4.13.23</em>
+        </div>
+    </a>
+</li>
+<li>
+    <a href="../lab_10">
+        <img src="../lab_10/assets/snapshot.webp" alt="Lab 10 - Localization (Sim)">
+        <div>
+            <p>Lab 10 - Localization (Sim)</p>
+            <em> 4.20.23</em>
+        </div>
+    </a>
+</li>
+<li>
+    <a href="../lab_11">
+        <img src="../lab_11/assets/snapshot.webp" alt="Lab 11 - Localization (Real)">
+        <div>
+            <p>Lab 11 - Localization (Real)</p>
+            <em> 4.27.23</em>
+        </div>
+    </a>
+</li>
+            </ul>
+        </nav>
+    </aside>
+    <article id="article">
+        <h1>
+            Lab 11 - Localization (Real)
+        </h1>
+        <em class="date">
+            4.27.23
+        </em>
+        <br>
+        <h2>Introduction</h2>
+<p>In this lab I used a Bayes filter to localize my real robot within a known map.</p>
+<h2>Changes to the Codebase</h2>
+<p>To get us started we were provided with working Bayes filter code. This code only works for a single ToF sensor, and I wanted to use data from both sensors in for my filter. This would allow for better localization accuracy as it doubles the amount of information we get about the surroundings.</p>
+<p>The required change is found in <code>localization.py</code>, where I had to edit the <code>update_step</code> function:</p>
+<pre><code class="language-python">def update_step(self):
+        &quot;&quot;&quot; Update step of the Bayes Filter.
+        Update the probabilities in self.bel based on self.bel_bar and the sensor model.
+        &quot;&quot;&quot;
+        LOG.info(&quot;Update Step&quot;)
+        start_time = time.time()
+
+        self.bel = deepcopy(self.bel_bar)
+        
+        for i in range(0, self.mapper.OBS_PER_CELL):
+            self.bel = self.bel * self.gaussian(np.sum(np.abs(self.mapper.obs_views[:, :, :, i, :] - self.obs_range_data[i, :]), axis=3), 0, self.sensor_sigma * 4) # edited for two sensors
+            self.bel = self.bel / np.sum(self.bel)
+
+        LOG.info(&quot;     | Update Time: {:.3f} secs&quot;.format(time.time() - start_time))
+</code></pre>
+<p>This change work in conjunction with the edits detailed in <a href="../lab_10">lab 10</a> to allow for measurements to be passed as <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>×</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">n \times 2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.66666em;vertical-align:-0.08333em;"></span><span class="mord mathdefault">n</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">2</span></span></span></span></eq> matrix instead of an array. It respects the configuration in <code>config/world.yml</code>, making it easy to configure to your robot's specification.</p>
+<p>Additionally, I had to change some parts of the codebase to accommodate for my asynchronous BLE reads. These edits were:</p>
+<p>Adding the async keyword <code>lab11_real.ipynb/RealRobot.perform_observation_loop</code></p>
+<pre><code class="language-python">async def perform_observation_loop(self, rot_vel=120):
+</code></pre>
+<p>Adding the async keyword to <code>localization.py/BaseLocalization.get_observation_data</code> and the await keyword when calling <code>RealRobot.perform_observation_loop</code> inside of it</p>
+<pre><code class="language-python">async def get_observation_data(self, rot_vel=120):
+    self.obs_range_data, self.obs_bearing_data = await self.robot.perform_observation_loop(rot_vel)
+</code></pre>
+<p>Adding the await keyword when calling <code>loc.get_observation_data</code> in <code>lab11_real.ipynb</code></p>
+<pre><code class="language-python">await loc.get_observation_data()
+</code></pre>
+<p>I was then able to use <code>await asyncio.sleep(1)</code> to execute a non-blocking delay while the BLE handler managed data.</p>
+<h2>Integrating the Real Robot</h2>
+<p>To integrate the real robot with the Bayes filter, I needed to make the robot return evenly spaced readings from a 360 degree pan.</p>
+<p>My current data collection setup is very good at taking rapid readings, but not great at triggering readings at evenly spaced intervals. Instead of spending time writing and debugging new code, my routine takes as many readings as possible in a 360. I also record the corresponding gyroscope readings, then transmit the data back to the computer. On the Artemis I used the same PID angular speed controller is in <a href="../lab_9">lab 9</a>, and my python code was as follows:</p>
+<pre><code class="language-python">print(&quot;starting reading&quot;)
+ble.send_command(CMD.ENABLE_BUFFER, &quot;POSE&quot;)
+ble.send_command(CMD.ENABLE_BUFFER, &quot;TOF&quot;)
+ble.send_command(CMD.SET_PID_GAINS,&quot;ROTATION:|-0.01:|-0.001:|0.0&quot;)
+ble.send_command(CMD.ENABLE_ROBOT, &quot;&quot;)
+await asyncio.sleep(20)
+ble.send_command(CMD.DISABLE_ROBOT, &quot;&quot;)
+ble.send_command(CMD.DISABLE_BUFFER, &quot;POSE&quot;)
+ble.send_command(CMD.DISABLE_BUFFER, &quot;TOF&quot;)
+ble.start_notify(ble.uuid['RX_STRING'], ble_msg_handler)
+CURR_LOG_ARRAY = tof
+print(&quot;Retrieving TOF&quot;)
+ble.send_command(CMD.RETRIEVE_BUFFER, &quot;TOF&quot;)
+await asyncio.sleep(5)
+print(&quot;TOF retrieved&quot;)
+CURR_LOG_ARRAY = pose
+print(&quot;Retrieving POSE&quot;)
+ble.send_command(CMD.RETRIEVE_BUFFER, &quot;POSE&quot;)
+await asyncio.sleep(10)
+print(&quot;POSE retrieved&quot;)
+</code></pre>
+<p>Once I have the readings and their angles, I can find the readings that were taken closest to when the robots angle was at the correct orientation. Here's the code for extracting these readings:</p>
+<pre><code class="language-python">tof = np.array(tof).astype('float64')
+pose = np.array(pose).astype('float64')
+
+ret_tof = np.zeros([18, 2])
+temp = np.zeros([18, 3])
+
+for i in range(0, 18):
+    angle = i * 20 # Target angle
+    angle_i = np.argmin(np.abs(pose[:, 3] - angle)) # Index of closest reading
+    angle_t = pose[angle_i, 0] # Time closest reading was taken
+    angle = pose[angle_i, 3] # Closest angle
+    closest_tof = np.argmin(np.abs(tof[:, 0] - angle_t)) # Index of closest TOF reading to the target time
+    tof_reading = tof[closest_tof, 1:3] / 1000 # Get the TOF reading in M
+    temp[i, :] = [tof_reading[1], tof_reading[0], angle]
+    
+ret_tof = temp[:, 0:2]
+    
+return ret_tof, bearings
+</code></pre>
+<p>I compared some test readings and found that on average the closest reading was less than half a degree from the target angle. This is more than close enough, as gyroscope drift and misalignment contribute considerably more. This approach has the added benefit of allowing me to edit the reading spacing without re-flashing the Artemis.</p>
+<h2>Results</h2>
+<p>The filter worked surprisingly well, localizing with high accuracy and extremely high certainty.</p>
+<p>Here's a video of the entire localization process running:</p>
+<p><em>insert video</em></p>
+<p>And heres some data from specific points around the map. I included a picture of the robots real location, the predicted location from the filter, and console output showing the update time, certainty, and predicted angle.</p>
+<p>Location: (-3, -2)</p>
+<p><img src="./assets/(-3_-2)_real.webp" alt="Real robot location"></p>
+<p><img src="./assets/(-3_-2)_graph.webp" alt="Localization prediction"></p>
+<p><img src="./assets/(-3_-2)_text.webp" alt="Console output"></p>
+<p>Location: (0, 3)</p>
+<p><img src="./assets/(0_3)_real.webp" alt="Real robot location"></p>
+<p><img src="./assets/(0_3)_graph.webp" alt="Localization prediction"></p>
+<p><img src="./assets/(0_3)_text.webp" alt="Console output"></p>
+<p>Location: (5, -3)</p>
+<p><img src="./assets/(5_-3)_real.webp" alt="Real robot location"></p>
+<p><img src="./assets/(5_-3)_graph.webp" alt="Localization prediction"></p>
+<p><img src="./assets/(5_-3)_text.webp" alt="Console output"></p>
+<p>Location: (5, 3)</p>
+<p><img src="./assets/(5_3)_real.webp" alt="Real robot location"></p>
+<p><img src="./assets/(5_3)_graph.webp" alt="Localization prediction"></p>
+<p><img src="./assets/(5_3)_text.webp" alt="Console output"></p>
+<p>Note that in addition to the location being predicted correctly, the angle (which was 0 for all tests) was correctly predicted in at all locations (10 is the bucket closest to 0).</p>
+<h2>Reflection</h2>
+<p>I honestly cannot believe this worked so well. These results were not cherry picked by the way, each is the output from my first attempt at that location. Additionally, I tested consistency at (0,0) and had no erroneous predictions over about 10 tests. Pretty impressive for a cheap little car!</p>
+<p>I also seem to have considerably better results than students from past years. Two top scorers (<a href="https://jackdefay.github.io/ECE4960/">Jack Defay</a> and <a href="https://anyafp.github.io/ece4960/labs/lab12/">Anya Prabowo</a>) both suffered significant issues with finding the correct location.</p>
+<p>I have two theories for why my solution performed well, but I'm not totally sure if either are the real reason. The first is my sampling method. By continuously sampling and taking only the readings that aligned with my target rotation, I was able to get high accuracy in their spacing.</p>
+<p>The second is using both ToF sensors in my model. The obvious benefit is increased number of samples, but I don't think that alone would have enough of an effect. The two sensors should, in theory, get the same readings but 40 degrees apart. So theres no real &quot;new&quot; information, just a confirmation of the old info.</p>
+<p>These explanations also wouldn't help with the symmetry issue, where two areas result in similar sensor readings because they share the same shape. The distribution was surprisingly highly uni-modal, with the certainty hovering around 99.98%. I would expect this to be much more distributed in places like (5,3) where the corner forms a common feature.</p>
+<p>Either way I'm not complaining. Accurate localization will be a huge help in lab 12, where I attempt to make the car navigate through waypoints.</p>
+
+    </article>
+    <div id="right_pad"></div>
+</body>
+
+</html>

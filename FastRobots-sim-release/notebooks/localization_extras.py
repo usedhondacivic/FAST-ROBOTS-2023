@@ -104,11 +104,11 @@ class Localization(BaseLocalization):
         start_time = time.time()
 
         self.bel = deepcopy(self.bel_bar)
-
+        
         for i in range(0, self.mapper.OBS_PER_CELL):
-            self.bel = self.bel * self.gaussian(self.mapper.obs_views[:, :, :, i] - self.obs_range_data[i][0],
+            self.bel = self.bel * self.gaussian(np.sum(np.abs(self.mapper.obs_views[:, :, :, i, :] - self.obs_range_data[i, :]), axis=3),
                                                 0,
-                                                self.sensor_sigma)
+                                                self.sensor_sigma * 4) # edited for two sensors
             self.bel = self.bel / np.sum(self.bel)
 
         LOG.info("     | Update Time: {:.3f} secs".format(
@@ -139,5 +139,7 @@ class Localization(BaseLocalization):
             *current_belief))
 
         # Plot data
+        belief = np.sum(self.bel, axis=2)
+        self.cmdr.plot_distribution(belief)
         self.cmdr.plot_bel(current_belief[0],
                            current_belief[1])

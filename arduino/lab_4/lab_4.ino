@@ -367,7 +367,7 @@ public:
   void update() {
     if (!robot_enabled) {
       set_wheel_output(0.0, 0.0);
-      pid_controllers.setpoints[ROTATION] = 10;
+      pid_controllers.setpoints[ROTATION] = 20;
       pid_controllers.pid[ROTATION].reset();
       update_sensor_readings();
       sensor_readings.gyro.z = 0;
@@ -520,7 +520,7 @@ public:
 
       pose.rot.stamp = millis();
 
-      if (data_buffers.enabled[POSE]) {
+      if (data_buffers.enabled[POSE] && (data_buffers.pose_rot.getLength() == 0 || millis() - data_buffers.pose_rot.Last().stamp > 50)) {
         data_buffers.pose_rot.Append(pose.rot);
       }
     }
@@ -757,7 +757,8 @@ public:
             the_car->data_buffers.enabled[buf] = false;
 
             Serial.print("Sending buffer: ");
-            Serial.println(char_arr);
+            Serial.print(char_arr);
+            Serial.print(" of length: ");
             tx_estring_value.clear();
             tx_estring_value.append("<START BUFFER ");
             tx_estring_value.append(char_arr);
@@ -765,26 +766,32 @@ public:
             tx_characteristic_string.writeValue(tx_estring_value.c_str());
 
             if (buf == CAR::ACCEL) {
+              Serial.println(the_car->data_buffers.accel.getLength());
               send_data_buffer(&(the_car->data_buffers.accel));
               the_car->data_buffers.accel.Clear();
             }
             if (buf == CAR::GYRO) {
+              Serial.println(the_car->data_buffers.gyro.getLength());
               send_data_buffer(&(the_car->data_buffers.gyro));
               the_car->data_buffers.gyro.Clear();
             }
             if (buf == CAR::MAG) {
+              Serial.println(the_car->data_buffers.mag.getLength());
               send_data_buffer(&(the_car->data_buffers.mag));
-              the_car->data_buffers.gyro.Clear();
+              the_car->data_buffers.mag.Clear();
             }
             if (buf == CAR::TOF) {
+              Serial.println(the_car->data_buffers.tof.getLength());
               send_data_buffer(&(the_car->data_buffers.tof));
               the_car->data_buffers.tof.Clear();
             }
             if (buf == CAR::POSE) {
+              Serial.println(the_car->data_buffers.pose_rot.getLength());
               send_data_buffer(&(the_car->data_buffers.pose_rot));
               the_car->data_buffers.pose_rot.Clear();
             }
             if (buf == CAR::MOTOR) {
+              Serial.println(the_car->data_buffers.motor_input.getLength());
               send_data_buffer(&(the_car->data_buffers.motor_input));
               the_car->data_buffers.motor_input.Clear();
             }
