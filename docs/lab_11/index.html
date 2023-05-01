@@ -163,7 +163,7 @@
         <h2>Introduction</h2>
 <p>In this lab I used a Bayes filter to localize my real robot within a known map.</p>
 <h2>Changes to the Codebase</h2>
-<p>To get us started we were provided with working Bayes filter code. This code only works for a single ToF sensor, and I wanted to use data from both sensors in for my filter. This would allow for better localization accuracy as it doubles the amount of information we get about the surroundings.</p>
+<p>We were provided with working Bayes filter code to get us started, but this code only works for a single ToF sensor. I wanted to use data from both sensors for my filter, allowing for better localization accuracy as it doubles the amount of information I get about the surroundings.</p>
 <p>The required change is found in <code>localization.py</code>, where I had to edit the <code>update_step</code> function:</p>
 <pre><code class="language-python">def update_step(self):
         &quot;&quot;&quot; Update step of the Bayes Filter.
@@ -180,7 +180,7 @@
 
         LOG.info(&quot;     | Update Time: {:.3f} secs&quot;.format(time.time() - start_time))
 </code></pre>
-<p>This change work in conjunction with the edits detailed in <a href="../lab_10">lab 10</a> to allow for measurements to be passed as <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>×</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">n \times 2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.66666em;vertical-align:-0.08333em;"></span><span class="mord mathdefault">n</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">2</span></span></span></span></eq> matrix instead of an array. It respects the configuration in <code>config/world.yml</code>, making it easy to configure to your robot's specification.</p>
+<p>This change works in conjunction with the edits detailed in <a href="../lab_10">lab 10</a> to allow for measurements to be passed as <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>×</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">n \times 2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.66666em;vertical-align:-0.08333em;"></span><span class="mord mathdefault">n</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">2</span></span></span></span></eq> matrix instead of an array. It respects the configuration in <code>config/world.yml</code>, making it easy to configure to your robot's specification.</p>
 <p>Additionally, I had to change some parts of the codebase to accommodate for my asynchronous BLE reads. These edits were:</p>
 <p>Adding the async keyword <code>lab11_real.ipynb/RealRobot.perform_observation_loop</code></p>
 <pre><code class="language-python">async def perform_observation_loop(self, rot_vel=120):
@@ -195,7 +195,7 @@
 <p>I was then able to use <code>await asyncio.sleep(1)</code> to execute a non-blocking delay while the BLE handler managed data.</p>
 <h2>Integrating the Real Robot</h2>
 <p>To integrate the real robot with the Bayes filter, I needed to make the robot return evenly spaced readings from a 360 degree pan.</p>
-<p>My current data collection setup is very good at taking rapid readings, but not great at triggering readings at evenly spaced intervals. Instead of spending time writing and debugging new code, I decided to just reuse my old code.My routine takes as many ToF and gyroscope readings as possible in a 360 spin, then transmits the data back to the computer. On the Artemis I used the same PID angular speed controller is in <a href="../lab_9">lab 9</a>, and my python code was as follows:</p>
+<p>My current data collection setup is very good at taking rapid readings, but not great at triggering readings at evenly spaced intervals. Instead of spending time writing and debugging new code, I decided to just reuse my old code. My routine takes as many ToF and gyroscope readings as possible in a 360 spin, then transmits the data back to the computer. On the Artemis I used the same PID angular speed controller from <a href="../lab_9">lab 9</a>, and my python code is as follows:</p>
 <pre><code class="language-python">print(&quot;starting reading&quot;)
 ble.send_command(CMD.ENABLE_BUFFER, &quot;POSE&quot;)
 ble.send_command(CMD.ENABLE_BUFFER, &quot;TOF&quot;)
@@ -237,7 +237,7 @@ ret_tof = temp[:, 0:2]
     
 return ret_tof, bearings
 </code></pre>
-<p>I found on average the closest reading was less than half a degree from the target angle. This is more than close enough, as gyroscope drift and misalignment contribute considerably more. This approach has the added benefit of allowing me to edit the reading spacing without re-flashing the Artemis.</p>
+<p>I found that the closest reading was less than half a degree from the target angle on average. This is more than close enough, as gyroscope drift and misalignment contribute considerably more error. This approach has the added benefit of allowing me to edit the reading spacing without re-flashing the Artemis.</p>
 <h2>Results</h2>
 <p>The filter worked surprisingly well, localizing with high accuracy and extremely high certainty.</p>
 <p>Here's a video of the entire localization process running:</p>

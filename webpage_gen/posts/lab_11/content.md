@@ -4,7 +4,7 @@ In this lab I used a Bayes filter to localize my real robot within a known map.
 
 ## Changes to the Codebase
 
-To get us started we were provided with working Bayes filter code. This code only works for a single ToF sensor, and I wanted to use data from both sensors in for my filter. This would allow for better localization accuracy as it doubles the amount of information we get about the surroundings.
+We were provided with working Bayes filter code to get us started, but this code only works for a single ToF sensor. I wanted to use data from both sensors for my filter, allowing for better localization accuracy as it doubles the amount of information I get about the surroundings.
 
 The required change is found in `localization.py`, where I had to edit the `update_step` function:
 
@@ -25,7 +25,7 @@ def update_step(self):
         LOG.info("     | Update Time: {:.3f} secs".format(time.time() - start_time))
 ```
 
-This change work in conjunction with the edits detailed in [lab 10](../lab_10) to allow for measurements to be passed as $n \times 2$ matrix instead of an array. It respects the configuration in `config/world.yml`, making it easy to configure to your robot's specification.
+This change works in conjunction with the edits detailed in [lab 10](../lab_10) to allow for measurements to be passed as $n \times 2$ matrix instead of an array. It respects the configuration in `config/world.yml`, making it easy to configure to your robot's specification.
 
 Additionally, I had to change some parts of the codebase to accommodate for my asynchronous BLE reads. These edits were:
 
@@ -54,7 +54,7 @@ I was then able to use `await asyncio.sleep(1)` to execute a non-blocking delay 
 
 To integrate the real robot with the Bayes filter, I needed to make the robot return evenly spaced readings from a 360 degree pan.
 
-My current data collection setup is very good at taking rapid readings, but not great at triggering readings at evenly spaced intervals. Instead of spending time writing and debugging new code, I decided to just reuse my old code.My routine takes as many ToF and gyroscope readings as possible in a 360 spin, then transmits the data back to the computer. On the Artemis I used the same PID angular speed controller is in [lab 9](../lab_9), and my python code was as follows:
+My current data collection setup is very good at taking rapid readings, but not great at triggering readings at evenly spaced intervals. Instead of spending time writing and debugging new code, I decided to just reuse my old code. My routine takes as many ToF and gyroscope readings as possible in a 360 spin, then transmits the data back to the computer. On the Artemis I used the same PID angular speed controller from [lab 9](../lab_9), and my python code is as follows:
 
 ```python
 print("starting reading")
@@ -102,7 +102,7 @@ ret_tof = temp[:, 0:2]
 return ret_tof, bearings
 ```
 
-I found on average the closest reading was less than half a degree from the target angle. This is more than close enough, as gyroscope drift and misalignment contribute considerably more. This approach has the added benefit of allowing me to edit the reading spacing without re-flashing the Artemis.
+I found that the closest reading was less than half a degree from the target angle on average. This is more than close enough, as gyroscope drift and misalignment contribute considerably more error. This approach has the added benefit of allowing me to edit the reading spacing without re-flashing the Artemis.
 
 ## Results
 
