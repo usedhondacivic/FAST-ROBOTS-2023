@@ -163,7 +163,7 @@
         <h2>Introduction</h2>
 <p>In this lab I used a Bayes filter to localize my real robot within a known map.</p>
 <h2>Changes to the Codebase</h2>
-<p>To get us started we were provided with working Bayes filter code. This code only works for a single ToF sensor, and I wanted to use data from both sensors in for my filter. This would allow for better localization accuracy as it doubles the amount of information we get about the surroundings.</p>
+<p>We were provided with working Bayes filter code to get us started, but this code only works for a single ToF sensor. I wanted to use data from both sensors for my filter, allowing for better localization accuracy as it doubles the amount of information I get about the surroundings.</p>
 <p>The required change is found in <code>localization.py</code>, where I had to edit the <code>update_step</code> function:</p>
 <pre><code class="language-python">def update_step(self):
         &quot;&quot;&quot; Update step of the Bayes Filter.
@@ -180,7 +180,7 @@
 
         LOG.info(&quot;     | Update Time: {:.3f} secs&quot;.format(time.time() - start_time))
 </code></pre>
-<p>This change work in conjunction with the edits detailed in <a href="../lab_10">lab 10</a> to allow for measurements to be passed as <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>×</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">n \times 2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.66666em;vertical-align:-0.08333em;"></span><span class="mord mathdefault">n</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">2</span></span></span></span></eq> matrix instead of an array. It respects the configuration in <code>config/world.yml</code>, making it easy to configure to your robot's specification.</p>
+<p>This change works in conjunction with the edits detailed in <a href="../lab_10">lab 10</a> to allow for measurements to be passed as <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>×</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">n \times 2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.66666em;vertical-align:-0.08333em;"></span><span class="mord mathdefault">n</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">2</span></span></span></span></eq> matrix instead of an array. It respects the configuration in <code>config/world.yml</code>, making it easy to configure to your robot's specification.</p>
 <p>Additionally, I had to change some parts of the codebase to accommodate for my asynchronous BLE reads. These edits were:</p>
 <p>Adding the async keyword <code>lab11_real.ipynb/RealRobot.perform_observation_loop</code></p>
 <pre><code class="language-python">async def perform_observation_loop(self, rot_vel=120):
@@ -195,7 +195,7 @@
 <p>I was then able to use <code>await asyncio.sleep(1)</code> to execute a non-blocking delay while the BLE handler managed data.</p>
 <h2>Integrating the Real Robot</h2>
 <p>To integrate the real robot with the Bayes filter, I needed to make the robot return evenly spaced readings from a 360 degree pan.</p>
-<p>My current data collection setup is very good at taking rapid readings, but not great at triggering readings at evenly spaced intervals. Instead of spending time writing and debugging new code, my routine takes as many readings as possible in a 360. I also record the corresponding gyroscope readings, then transmit the data back to the computer. On the Artemis I used the same PID angular speed controller is in <a href="../lab_9">lab 9</a>, and my python code was as follows:</p>
+<p>My current data collection setup is very good at taking rapid readings, but not great at triggering readings at evenly spaced intervals. Instead of spending time writing and debugging new code, I decided to just reuse my old code. My routine takes as many ToF and gyroscope readings as possible in a 360 spin, then transmits the data back to the computer. On the Artemis I used the same PID angular speed controller from <a href="../lab_9">lab 9</a>, and my python code is as follows:</p>
 <pre><code class="language-python">print(&quot;starting reading&quot;)
 ble.send_command(CMD.ENABLE_BUFFER, &quot;POSE&quot;)
 ble.send_command(CMD.ENABLE_BUFFER, &quot;TOF&quot;)
@@ -237,35 +237,44 @@ ret_tof = temp[:, 0:2]
     
 return ret_tof, bearings
 </code></pre>
-<p>I compared some test readings and found that on average the closest reading was less than half a degree from the target angle. This is more than close enough, as gyroscope drift and misalignment contribute considerably more. This approach has the added benefit of allowing me to edit the reading spacing without re-flashing the Artemis.</p>
+<p>I found that the closest reading was less than half a degree from the target angle on average. This is more than close enough, as gyroscope drift and misalignment contribute considerably more error. This approach has the added benefit of allowing me to edit the reading spacing without re-flashing the Artemis.</p>
 <h2>Results</h2>
 <p>The filter worked surprisingly well, localizing with high accuracy and extremely high certainty.</p>
 <p>Here's a video of the entire localization process running:</p>
-<p><em>insert video</em></p>
+<iframe width="451" height="801" src="https://www.youtube.com/embed/EkaNJGj12mo" title="ECE 4160 - Real Robot Bayes Localization" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 <p>And heres some data from specific points around the map. I included a picture of the robots real location, the predicted location from the filter, and console output showing the update time, certainty, and predicted angle.</p>
-<p>Location: (-3, -2)</p>
+<p>Point Label: (-3, -2)</p>
+<p>Ground Truth Location: (-0.9144, -0.6096, 0) (meters, meters, degrees)</p>
+<p>Localization Prediction: (-0.914, -0.610, 10), 99.98% Certainty</p>
 <p><img src="./assets/(-3_-2)_real.webp" alt="Real robot location"></p>
 <p><img src="./assets/(-3_-2)_graph.webp" alt="Localization prediction"></p>
 <p><img src="./assets/(-3_-2)_text.webp" alt="Console output"></p>
-<p>Location: (0, 3)</p>
+<p>Point Label: (0, 3)</p>
+<p>Ground Truth Location: (0, 0.9144, 0) (meters, meters, degrees)</p>
+<p>Localization Prediction: (0, 0.914, 10), 99.99% Certainty</p>
 <p><img src="./assets/(0_3)_real.webp" alt="Real robot location"></p>
 <p><img src="./assets/(0_3)_graph.webp" alt="Localization prediction"></p>
 <p><img src="./assets/(0_3)_text.webp" alt="Console output"></p>
-<p>Location: (5, -3)</p>
+<p>Point Label: (5, -3)</p>
+<p>Ground Truth Location: (1.524, -0.9144, 0) (meters, meters, degrees)</p>
+<p>Localization Prediction: (1.524, -0.914, 10), 99.24% Certainty</p>
 <p><img src="./assets/(5_-3)_real.webp" alt="Real robot location"></p>
 <p><img src="./assets/(5_-3)_graph.webp" alt="Localization prediction"></p>
 <p><img src="./assets/(5_-3)_text.webp" alt="Console output"></p>
-<p>Location: (5, 3)</p>
+<p>Point Label: (5, 3)</p>
+<p>Ground Truth Location: (1.524, 0.9144, 0) (meters, meters, degrees)</p>
+<p>Localization Prediction: (1.524, 0.610, 10), 90.28% Certainty</p>
 <p><img src="./assets/(5_3)_real.webp" alt="Real robot location"></p>
 <p><img src="./assets/(5_3)_graph.webp" alt="Localization prediction"></p>
 <p><img src="./assets/(5_3)_text.webp" alt="Console output"></p>
 <p>Note that in addition to the location being predicted correctly, the angle (which was 0 for all tests) was correctly predicted in at all locations (10 is the bucket closest to 0).</p>
+<p>The point at (5,3) is slightly lower than the real world measurement due to an error in the simulated map. As seen from the overhead views, the box in the the real map is significantly higher than in the simulator. However, the Bayes filter gave a great estimate given the imperfect data, and signaled the discrepancy through a lower certainty value (90% vs the 99+% of the other readings).</p>
 <h2>Reflection</h2>
 <p>I honestly cannot believe this worked so well. These results were not cherry picked by the way, each is the output from my first attempt at that location. Additionally, I tested consistency at (0,0) and had no erroneous predictions over about 10 tests. Pretty impressive for a cheap little car!</p>
-<p>I also seem to have considerably better results than students from past years. Two top scorers (<a href="https://jackdefay.github.io/ECE4960/">Jack Defay</a> and <a href="https://anyafp.github.io/ece4960/labs/lab12/">Anya Prabowo</a>) both suffered significant issues with finding the correct location.</p>
+<p>I also seem to have considerably better results than students from past years. Two top scorers (<a href="https://jackdefay.github.io/ECE4960/">Jack Defay</a> and <a href="https://anyafp.github.io/ece4960/labs/lab12/">Anya Prabowo</a>) both suffered from significant issues with finding the correct location.</p>
 <p>I have two theories for why my solution performed well, but I'm not totally sure if either are the real reason. The first is my sampling method. By continuously sampling and taking only the readings that aligned with my target rotation, I was able to get high accuracy in their spacing.</p>
 <p>The second is using both ToF sensors in my model. The obvious benefit is increased number of samples, but I don't think that alone would have enough of an effect. The two sensors should, in theory, get the same readings but 40 degrees apart. So theres no real &quot;new&quot; information, just a confirmation of the old info.</p>
-<p>These explanations also wouldn't help with the symmetry issue, where two areas result in similar sensor readings because they share the same shape. The distribution was surprisingly highly uni-modal, with the certainty hovering around 99.98%. I would expect this to be much more distributed in places like (5,3) where the corner forms a common feature.</p>
+<p>These explanations also wouldn't help with the symmetry issue, where two areas result in similar sensor readings because they share the same shape. The distribution was surprisingly highly uni-modal, with the certainty hovering around 95% or above. I would expect this to be much more distributed in places like (5,3) where the corner forms a common feature.</p>
 <p>Either way I'm not complaining. Accurate localization will be a huge help in lab 12, where I attempt to make the car navigate through waypoints.</p>
 
     </article>
