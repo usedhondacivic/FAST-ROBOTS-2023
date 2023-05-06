@@ -22,6 +22,16 @@ using namespace BLA;               //This allows you to declare a matrix
 
 #define SERIAL_PORT Serial
 
+//http://blog.lexique-du-net.com/index.php?post/Calculate-the-real-difference-between-two-angles-keeping-the-sign
+
+double calculateDifferenceBetweenAngles(double firstAngle, double secondAngle)
+{
+  double difference = secondAngle - firstAngle;
+  while (difference < -180) difference += 360;
+  while (difference > 180) difference -= 360;
+  return difference;
+ }
+
 class KALMAN_FILTER{
 private:
   Matrix<2,2> A;
@@ -169,8 +179,10 @@ public:
   }
 
   void reset(){
+    z_prev = NULL;
     last_time = NULL;
     integrator = 0;
+    output = 0;
   }
 };
 
@@ -236,9 +248,10 @@ public:
   } data_buffers;
 
   enum PID_CONTROLLER_TYPE { ROTATION,
+                             ROTATION_RATE,                              
                              PID_NA };
 
-  static const int num_pid_controllers = 1;
+  static const int num_pid_controllers = 2;
 
   struct {
     PID_CONTROLLER pid[num_pid_controllers];
@@ -246,6 +259,15 @@ public:
     double setpoints[num_pid_controllers];
     bool enabled[num_pid_controllers];
   } pid_controllers;
+
+  enum MODE_TYPE {SEEK_ANGLE, TAKE_READINGS, MOVE_FORWARD, BRAKE};
+
+  MODE_TYPE current_mode = SEEK_ANGLE;
+  bool mode_changed = true;
+  double reading_start_rot = 0.0;
+  double current_target = 0.0;
+  long int mode_start = -1.0;
+  
 
   void setup() {
     Serial.begin(115200);
@@ -330,6 +352,7 @@ public:
     data_buffers.enabled[MOTOR] = false;
 
     pid_controllers.setpoints[ROTATION] = 0;
+    pid_controllers.setpoints[ROTATION_RATE] = 20;
 
     Serial.println("Initalizing Kalman Filter...");
 
@@ -367,7 +390,9 @@ public:
   void update() {
     if (!robot_enabled) {
       set_wheel_output(0.0, 0.0);
-      pid_controllers.setpoints[ROTATION] = 20;
+      pid_controllers.setpoints[ROTATION] = 0;
+      pid_controllers.pid[ROTATION].reset();
+      pid_controllers.setpoints[ROTATION_RATE] = 20;
       pid_controllers.pid[ROTATION].reset();
       update_sensor_readings();
       sensor_readings.gyro.z = 0;
@@ -379,17 +404,58 @@ public:
       Matrix<2,1> mu_init = {-(float)tof_avg, 0};
       Matrix<2,2> sig_init = {pow(5, 2), 0, 0, pow(5, 2)};
       distance_filter.set_init(mu_init, sig_init);
+
+      mode_start = millis();
       return;
     }
 
     update_sensor_readings();
     update_pid_controllers();
 
-    float out = pid_controllers.pid[ROTATION].output;
+    if(current_mode == TAKE_READINGS){
+      if(mode_changed){
+        reading_start_rot = sensor_readings.gyro.z;
+        pid_controllers.pid[ROTATION].reset();
+        pid_controllers.pid[ROTATION_RATE].reset();
+        pid_controllers.setpoints[ROTATION] = reading_start_rot;
+        pid_controllers.setpoints[ROTATION_RATE] = current_target;
+        data_buffers.enabled[POSE] = true;
+        data_buffers.enabled[TOF] = true;
+        Serial.println("Start: TAKE_READINGS");
+      }
 
-    set_wheel_output(out, -out);
-    //Serial.println(sensor_readings.gyro_delta.z);
-
+      if(sensor_readings.gyro.z - reading_start_rot < 360.0){ // Do a 360 to take readings
+        float out = pid_controllers.pid[ROTATION_RATE].output;
+        set_wheel_output(out, -out);
+      }else{
+        data_buffers.enabled[POSE] = false;
+        data_buffers.enabled[TOF] = false;
+        current_mode =  SEEK_ANGLE;
+        current_target = reading_start_rot;
+      }
+    }else if(current_mode == SEEK_ANGLE){
+      pid_controllers.setpoints[ROTATION] = current_target;
+      float out = pid_controllers.pid[ROTATION].output;
+      set_wheel_output(out, -out);
+    }else if(current_mode == MOVE_FORWARD){
+      if(mode_changed){
+        pid_controllers.setpoints[ROTATION_RATE] = 0.0;
+        pid_controllers.pid[ROTATION_RATE].reset();
+        mode_start = millis();
+      }
+      float out = pid_controllers.pid[ROTATION_RATE].output;
+      if(millis() - mode_start < 100){
+        set_wheel_output(0.5, 0.5);
+      }
+      else if(millis() - mode_start < current_target){
+        set_wheel_output(0.13 + out, 0.13 - out);
+      }else{
+        set_wheel_output(0, 0, true);
+      }
+    }else if(current_mode == BRAKE){
+      set_wheel_output(0, 0, true);
+    }
+    mode_changed = false;
   }
   
   void set_wheel_output(double left, double right){
@@ -398,7 +464,7 @@ public:
 
   // 1.0 = full forward, -1.0 = full backwards
   void set_wheel_output(double left, double right, bool brake) {
-    right = right * 0.9; // Make it go straight
+    right = right; // Make it go straight
     int deadband = 20;
     int remaining_band = 255 - deadband;
     int left_sign = left / abs(left);
@@ -446,7 +512,9 @@ public:
   }
 
   void update_pid_controllers() {
-    pid_controllers.pid[ROTATION].step(pid_controllers.setpoints[ROTATION], sensor_readings.gyro_delta.z);
+    double a =  calculateDifferenceBetweenAngles(pid_controllers.setpoints[ROTATION], sensor_readings.gyro.z);
+    pid_controllers.pid[ROTATION].step(a, 0.0);
+    pid_controllers.pid[ROTATION_RATE].step(pid_controllers.setpoints[ROTATION_RATE], sensor_readings.gyro_delta.z);
   }
 
   void update_sensor_readings() {
@@ -520,7 +588,7 @@ public:
 
       pose.rot.stamp = millis();
 
-      if (data_buffers.enabled[POSE] && (data_buffers.pose_rot.getLength() == 0 || millis() - data_buffers.pose_rot.Last().stamp > 50)) {
+      if (data_buffers.enabled[POSE] && (data_buffers.pose_rot.getLength() == 0 || millis() - data_buffers.pose_rot.Last().stamp > 150)) {
         data_buffers.pose_rot.Append(pose.rot);
       }
     }
@@ -552,6 +620,9 @@ public:
     if (strcmp(str, "ROTATION") == 0) {
       return ROTATION;
     }
+    if (strcmp(str, "ROTATION_RATE") == 0) {
+      return ROTATION_RATE;
+    }
     return PID_NA;
   }
 
@@ -560,6 +631,10 @@ public:
       start_time = millis();
     }
     robot_enabled = enable;
+  }
+
+  void set_gyro(double val){
+    sensor_readings.gyro.z = val;
   }
 };
 
@@ -588,7 +663,10 @@ private:
     ENABLE_BUFFER,
     RETRIEVE_BUFFER,
     DISABLE_BUFFER,
-    SET_PID_GAINS
+    SET_PID_GAINS,
+    SET_MODE,
+    SET_TARGET,
+    SET_GYRO
   };
 
   int interval = 500;
@@ -825,9 +903,46 @@ public:
 
           CAR::PID_CONTROLLER_TYPE pid_type = the_car->string_to_PID_type(resp[0]);
           if (pid_type != CAR::PID_NA) {
-            the_car->pid_controllers.pid[pid_type].set_gains(strtod(resp[1], NULL), strtod(resp[2], NULL), strtod(resp[2], NULL));
+            the_car->pid_controllers.pid[pid_type].set_gains(strtod(resp[1], NULL), strtod(resp[2], NULL), strtod(resp[3], NULL));
+            Serial.print("Setting PID gains for controller #");
+            Serial.print(pid_type);
+            Serial.print(" to P: ");
+            Serial.print(strtod(resp[1], NULL)), 4;
+            Serial.print(" to I: ");
+            Serial.print(strtod(resp[2], NULL), 4);    
+            Serial.print(" to D: ");
+            Serial.println(strtod(resp[3], NULL), 4);    
           }
         }
+        break;
+      
+      case SET_MODE:
+        success = robot_cmd.get_next_value(char_arr);
+        if (!success)
+          return;
+        the_car->current_mode = (CAR::MODE_TYPE)atoi(char_arr);
+        the_car->mode_changed = true;
+        Serial.print("Set mode to: ");
+        Serial.println(the_car->current_mode);
+        break;
+      
+      case SET_TARGET:
+        success = robot_cmd.get_next_value(char_arr);
+        if (!success)
+          return;
+        the_car->current_target = strtod(char_arr, NULL);
+        Serial.print("Set target to: ");
+        Serial.println(char_arr);
+        
+        break;
+
+      case SET_GYRO:
+        success = robot_cmd.get_next_value(char_arr);
+        if (!success)
+          return;
+        the_car->set_gyro(strtod(char_arr, NULL));
+        Serial.print("Set current gyro to: ");
+        Serial.println(char_arr);
         break;
 
       default:

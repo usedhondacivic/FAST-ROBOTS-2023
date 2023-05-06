@@ -143,3 +143,7 @@ class Localization(BaseLocalization):
         self.cmdr.plot_distribution(belief)
         self.cmdr.plot_bel(current_belief[0],
                            current_belief[1])
+        
+    def get_current_estimate(self):
+        argmax_bel = get_max(self.bel)
+        return self.mapper.from_map(*argmax_bel[0])
