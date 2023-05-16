@@ -260,14 +260,13 @@ public:
     bool enabled[num_pid_controllers];
   } pid_controllers;
 
-  enum MODE_TYPE {SEEK_ANGLE, TAKE_READINGS, MOVE_FORWARD, BRAKE};
+  enum MODE_TYPE {SEEK_ANGLE, TAKE_READINGS, MOVE_FORWARD, BRAKE, BUG};
 
   MODE_TYPE current_mode = SEEK_ANGLE;
   bool mode_changed = true;
   double reading_start_rot = 0.0;
   double current_target = 0.0;
   long int mode_start = -1.0;
-  
 
   void setup() {
     Serial.begin(115200);
@@ -426,6 +425,9 @@ public:
 
       if(sensor_readings.gyro.z - reading_start_rot < 360.0){ // Do a 360 to take readings
         float out = pid_controllers.pid[ROTATION_RATE].output;
+        if(out >= -0.1){
+          out = -0.1;          
+        }
         set_wheel_output(out, -out);
       }else{
         data_buffers.enabled[POSE] = false;
@@ -439,21 +441,27 @@ public:
       set_wheel_output(out, -out);
     }else if(current_mode == MOVE_FORWARD){
       if(mode_changed){
-        pid_controllers.setpoints[ROTATION_RATE] = 0.0;
-        pid_controllers.pid[ROTATION_RATE].reset();
+        pid_controllers.setpoints[ROTATION] = sensor_readings.gyro.z;
         mode_start = millis();
       }
-      float out = pid_controllers.pid[ROTATION_RATE].output;
+      float out = pid_controllers.pid[ROTATION].output;
       if(millis() - mode_start < 100){
-        set_wheel_output(0.5, 0.5);
+        set_wheel_output(0.5 + out, 0.5 - out);
       }
       else if(millis() - mode_start < current_target){
-        set_wheel_output(0.13 + out, 0.13 - out);
+        set_wheel_output(0.2 + out, 0.2 - out);
       }else{
         set_wheel_output(0, 0, true);
       }
     }else if(current_mode == BRAKE){
       set_wheel_output(0, 0, true);
+    }else if(current_mode == BUG){
+      double left = ((float)sensor_readings.tof.distA) / 1000.0;
+      double right = ((float)sensor_readings.tof.distB) / 1000.0;
+      float out_left = 0.1 / (left * left);
+      float out_right = 0.1 / (right * right);
+
+      set_wheel_output(0.1 - out_left,  0.1 + out_right);
     }
     mode_changed = false;
   }
@@ -588,7 +596,7 @@ public:
 
       pose.rot.stamp = millis();
 
-      if (data_buffers.enabled[POSE] && (data_buffers.pose_rot.getLength() == 0 || millis() - data_buffers.pose_rot.Last().stamp > 150)) {
+      if (data_buffers.enabled[POSE] && (data_buffers.pose_rot.getLength() == 0 || millis() - data_buffers.pose_rot.Last().stamp > 100)) {
         data_buffers.pose_rot.Append(pose.rot);
       }
     }

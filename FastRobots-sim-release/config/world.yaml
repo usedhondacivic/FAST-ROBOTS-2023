@@ -6,19 +6,19 @@
 # - (x,y), (x',y')
 world:
   lines:
-    - (-1.6764,0.1524), (-1.6764,-1.3716)
-    - (-1.6764,-1.3716), (1.9812,-1.3716)
-    - (1.9812,-1.3716), (1.9812,1.3716)
-    - (1.9812,1.3716), (-0.7620,1.3716)
-    - (-0.7620,1.3716), (-0.7620,0.1524)
-    - (-0.7620,0.1524), (-1.6764,0.1524)
-    - (0.7620,-0.1524), (1.3716,-0.1524)
-    - (1.3716,-0.1524), (1.3716,0.4572)
-    - (1.3716,0.4572), (0.7620,0.4572)
-    - (0.7620,0.4572), (0.7620,-0.1524)
-    - (-0.1524,-1.3716), (-0.1524,-0.7620)
-    - (-0.1524,-0.7620), (0.1524,-0.7620)
-    - (0.1524,-0.7620), (0.1524,-1.3716)
+    - (0.0, 0.0), (0.0, 0.9779)
+    - (0.0, 0.9779), (0.2794, 0.9779)
+    - (0.2794, 0.9779), (0.2794, 1.181)
+    - (0.2794, 1.181), (0.0, 1.181)
+    - (0.0, 1.181), (0.0, 2.41)
+    - (0.0, 2.41), (0.4572, 2.41)
+    - (0.4572, 2.41), (1.3208, 1.524)
+    - (1.3208, 1.524), (1.3208, 0.635)
+    - (1.3208, 0.635), (1.1049, 0.635)
+    - (1.1049, 0.635), (1.1049, 0.3556)
+    - (1.1049, 0.3556), (1.3208, 0.3556)
+    - (1.3208, 0.3556), (1.3208, 0.0)
+    - (1.3208, 0.0), (0.0, 0.0)
 
 # Describe the robot parameters
 robot:
@@ -58,17 +58,17 @@ robot:
 
     # Discrete cell sizes
     # It is recommended that you do not change these values, unless you truly know what you are doing
-    cell_size_x: 0.3048
-    cell_size_y: 0.3048 
-    cell_size_a: 20
+    cell_size_x: 0.1524
+    cell_size_y: 0.1524 
+    cell_size_a: 5
 
     # Number of cells in each dimensions(x,y,a)
     # Calculated based on the range divided by the cell size in each dimension
     # Ex: max_cells_x = (max_x-min_x)/cell_size_x
     # Must be integers
-    max_cells_x: 12  # Total number of grid cells in the x direction
-    max_cells_y: 9   # Total number of grid cells in the y direction
-    max_cells_a: 18  # Total number of grid cells in the a direction
+    max_cells_x: 24  # Total number of grid cells in the x direction
+    max_cells_y: 18   # Total number of grid cells in the y direction
+    max_cells_a: 72  # Total number of grid cells in the a direction
 
     # Number of observations during the rotation behavior
     # It is also the number of observations made in each discrete cell

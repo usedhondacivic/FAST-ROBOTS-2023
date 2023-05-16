@@ -86,8 +86,12 @@ class Mapper():
 
         self.lines = [np.array([e[0] for e in robot.config_params["map_lines"]]),
                       np.array([e[1] for e in robot.config_params["map_lines"]])]
+        
+        self.obs_views = np.load('obs_views.npy')
+        self.obs_points_x= np.load('obs_points_x.npy')
+        self.obs_points_y = np.load('obs_points_y.npy')
 
-        self.populate_views()
+        self.populate_views(True)
 
     # Ref: https://stackoverflow.com/questions/2320986/easy-way-to-keeping-angles-between-179-and-180-degrees
     # https://stackoverflow.com/questions/36717163/python-numpy-radians-to-degrees-in-0-360
@@ -170,7 +174,7 @@ class Mapper():
 
         return np.array([ray_start, ray_start+(self.RAY_LENGTH*unit_ray)])
 
-    def populate_views(self):
+    def populate_views(self, pre):
         LOG.info(" | Number of observations per grid cell: {}".format(
             self.OBS_PER_CELL))
         LOG.info(" | Precaching Views...")
@@ -184,28 +188,33 @@ class Mapper():
                     self.x_values[cx, cy, ca] = pose[0]
                     self.y_values[cx, cy, ca] = pose[1]
                     self.a_values[cx, cy, ca] = pose[2]
+                    
+                    if not pre:
+                        for j in range(0, self.SENSOR_COUNT):
+                            # Calculate bearings and tracing rays
+                            bearings = np.arange(
+                                0, 360, self.RAY_TRACING_ANGLE_INCREMENT) + pose[2] + self.SENSOR_ANGLES[j]
 
-                    for j in range(0, self.SENSOR_COUNT):
-                        # Calculate bearings and tracing rays
-                        bearings = np.arange(
-                            0, 360, self.RAY_TRACING_ANGLE_INCREMENT) + pose[2] + self.SENSOR_ANGLES[j]
+                            tracing_rays = self.get_tracing_rays(pose[0],
+                                                                 pose[1],
+                                                                 bearings)
 
-                        tracing_rays = self.get_tracing_rays(pose[0],
-                                                             pose[1],
-                                                             bearings)
-
-                        # For each tracing ray, find the point of intersection and range
-                        view = None
-                        point = None
-                        for i in range(0, self.OBS_PER_CELL):
-                            try:
-                                view, point = self.get_intersection(
-                                    tracing_rays[:, :, i], pose)
-                                self.obs_views[cx, cy, ca, i, j] = view
-                                self.obs_points_x[cx, cy, ca, i, j] = point[0]
-                                self.obs_points_y[cx, cy, ca, i, j] = point[1]
-                            except:
-                                pass
+                            # For each tracing ray, find the point of intersection and range
+                            view = None
+                            point = None
+                            for i in range(0, self.OBS_PER_CELL):
+                                try:
+                                    view, point = self.get_intersection(
+                                        tracing_rays[:, :, i], pose)
+                                    self.obs_views[cx, cy, ca, i, j] = view
+                                    self.obs_points_x[cx, cy, ca, i, j] = point[0]
+                                    self.obs_points_y[cx, cy, ca, i, j] = point[1]
+                                except:
+                                    pass
+                            
+        np.save('obs_views.npy', self.obs_views);
+        np.save('obs_points_x.npy', self.obs_points_x);
+        np.save('obs_points_y.npy', self.obs_points_y);
 
         LOG.info(" | Precaching Time: {:.3f} secs".format(
             time.time() - start_time))
