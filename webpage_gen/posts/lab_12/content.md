@@ -1,7 +1,3 @@
-## WIP
-
-This lab is still in progress, and the writeup is not yet complete. Come back soon for more.
-
 ## Introduction
 
 In this lab I combined my work in all past labs to make my car intelligently follow a set of waypoints.
@@ -37,7 +33,12 @@ By running through this process enough times, the robot will eventually navigate
 
 ## Implementation
 
+For my previous labs, I used Python as a commander for most of the robots actions. This works fine when doing isolated tasks (ie localizing one time), but can lead to accumulated errors when the tasks are chained together. A large part of the error comes from BLE communication delay, which is non-deterministic.
+
+Instead of trusting the unreliable timing from the laptop, I implemented a series of modes for the Artemis to address timing sensitive routines. These routines are seek angle, travel straight for time, and get localization readings. Pieced together, they are all thats needed for the algorithm outlined in strategy.
+
 ## Results
 
-## Conclusion
+I was unfortunately unable to finish this lab. The robot was able to successfully navigate two waypoints, then the motor drivers would overheat and cause the movement to become erratic. I hypothesize this had something to do with the rapid direction changes from the PID loop for angular velocity control. My laptop also decided to kick the bucket while debugging this issue, so thats all she wrote folks!
 
+Thanks for a great semester to everyone involved. Live laugh fast robots.
